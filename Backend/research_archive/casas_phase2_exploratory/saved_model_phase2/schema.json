@@ -1,0 +1,94 @@
+{
+  "metadata": {
+    "model_phase": "Phase 2",
+    "model_type": "Exploratory Binary Task-Quality Classifier",
+    "task_type": "Binary Classification",
+    "dataset": "CASAS Cognitive Assessment Dataset (Zenodo 15717153)",
+    "n_observations": 2074,
+    "n_participants": 327,
+    "validation_scheme": "StratifiedGroupKFold(5 splits, grouped by Participant_ID)"
+  },
+  "experiments": {
+    "Experiment_A": {
+      "status": "Primary Research Model",
+      "description": "Primary Features (Internal Inter-Sensor Telemetry Dynamics)",
+      "boundary_dependency_note": "While internal inter-sensor pauses are independent of human intermediate substep annotations, the observation window itself strictly depends on proctor-defined task start/end boundary annotations (X-start, X-end).",
+      "features": {
+        "pause_cnt_5_int": {
+          "type": "integer",
+          "description": "Count of internal inter-sensor inactivity intervals >= 5.0 seconds during task window",
+          "unit": "count",
+          "valid_range": [
+            0,
+            100
+          ]
+        },
+        "max_pause_int": {
+          "type": "float",
+          "description": "Maximum internal inter-sensor inactivity interval during task window",
+          "unit": "seconds",
+          "valid_range": [
+            0.0,
+            300.0
+          ]
+        }
+      }
+    },
+    "Experiment_B": {
+      "status": "Exploratory Feature Addition",
+      "description": "Exploratory Comparison (Primary Features + Proctor Duration)",
+      "boundary_dependency_note": "Directly includes overall active duration (T_end - T_start), which is 100% determined by human proctor start/end annotations.",
+      "features": {
+        "pause_cnt_5_int": {
+          "type": "integer",
+          "description": "Count of internal inter-sensor inactivity intervals >= 5.0 seconds during task window",
+          "unit": "count",
+          "valid_range": [
+            0,
+            100
+          ]
+        },
+        "max_pause_int": {
+          "type": "float",
+          "description": "Maximum internal inter-sensor inactivity interval during task window",
+          "unit": "seconds",
+          "valid_range": [
+            0.0,
+            300.0
+          ]
+        },
+        "duration": {
+          "type": "float",
+          "description": "Proctor-bounded active task duration (T_end - T_start)",
+          "unit": "seconds",
+          "valid_range": [
+            0.0,
+            1500.0
+          ],
+          "limitation_note": "Directly bounded by human proctor start/end tags"
+        }
+      }
+    }
+  },
+  "target": {
+    "name": "task_quality_category",
+    "classes": {
+      "0": "Class 0: High Task Quality (CASAS Score 1; unassisted/standard execution)",
+      "1": "Class 1: Degraded Task Quality (CASAS Scores 2, 3, 5, 6; verbal prompt, incomplete, breakdown, or abort)"
+    },
+    "class_distribution": {
+      "0": 1447,
+      "1": 627
+    },
+    "formal_classification": "Researcher-defined binary task-quality classification"
+  },
+  "champion_model": {
+    "selected_experiment": "Experiment A (Primary Model)",
+    "model_algorithm": "Logistic Regression (Balanced)",
+    "feature_list": [
+      "pause_cnt_5_int",
+      "max_pause_int"
+    ],
+    "rationale": "Selected as primary research champion to maximize reliance on internal sensor interval dynamics rather than total proctor-bounded duration, while acknowledging the dependency on start/end window boundary tags."
+  }
+}

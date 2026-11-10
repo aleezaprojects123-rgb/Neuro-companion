@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "model_phase": "Phase 2",
+    "model_type": "Exploratory Binary Task-Quality Classifier",
+    "task_type": "Binary Classification",
+    "dataset": "CASAS Cognitive Assessment Dataset (Zenodo 15717153)",
+    "n_observations": 2074,
+    "n_participants": 327,
+    "validation_scheme": "StratifiedGroupKFold(5 splits, grouped by Participant_ID)"
+  },
+  "comparison_table": [
+    {
+      "experiment": "Exp A (Primary)",
+      "model": "Dummy (Most Frequent)",
+      "macro_f1": "0.4110 \u00b1 0.0012",
+      "balanced_accuracy": "0.5000 \u00b1 0.0000",
+      "accuracy": "0.6977 \u00b1 0.0034",
+      "recall_class_0": "1.0000 \u00b1 0.0000",
+      "recall_class_1": "0.0000 \u00b1 0.0000",
+      "roc_auc": "0.5000 \u00b1 0.0000"
+    },
+    {
+      "experiment": "Exp A (Primary)",
+      "model": "Dummy (Stratified)",
+      "macro_f1": "0.5089 \u00b1 0.0145",
+      "balanced_accuracy": "0.5089 \u00b1 0.0145",
+      "accuracy": "0.5853 \u00b1 0.0125",
+      "recall_class_0": "0.7021 \u00b1 0.0100",
+      "recall_class_1": "0.3157 \u00b1 0.0191",
+      "roc_auc": "0.5089 \u00b1 0.0145"
+    },
+    {
+      "experiment": "Exp A (Primary)",
+      "model": "Logistic Regression (Unweighted)",
+      "macro_f1": "0.5750 \u00b1 0.0258",
+      "balanced_accuracy": "0.5796 \u00b1 0.0195",
+      "accuracy": "0.7180 \u00b1 0.0156",
+      "recall_class_0": "0.9295 \u00b1 0.0217",
+      "recall_class_1": "0.2298 \u00b1 0.0436",
+      "roc_auc": "0.6999 \u00b1 0.0227"
+    },
+    {
+      "experiment": "Exp A (Primary)",
+      "model": "Logistic Regression (Balanced)",
+      "macro_f1": "0.6344 \u00b1 0.0198",
+      "balanced_accuracy": "0.6434 \u00b1 0.0251",
+      "accuracy": "0.6770 \u00b1 0.0144",
+      "recall_class_0": "0.7285 \u00b1 0.0209",
+      "recall_class_1": "0.5583 \u00b1 0.0617",
+      "roc_auc": "0.6999 \u00b1 0.0226"
+    },
+    {
+      "experiment": "Exp A (Primary)",
+      "model": "Random Forest (Unweighted)",
+      "macro_f1": "0.5361 \u00b1 0.0251",
+      "balanced_accuracy": "0.5553 \u00b1 0.0148",
+      "accuracy": "0.7103 \u00b1 0.0126",
+      "recall_class_0": "0.9475 \u00b1 0.0204",
+      "recall_class_1": "0.1632 \u00b1 0.0398",
+      "roc_auc": "0.6992 \u00b1 0.0255"
+    },
+    {
+      "experiment": "Exp A (Primary)",
+      "model": "Random Forest (Balanced)",
+      "macro_f1": "0.6164 \u00b1 0.0142",
+      "balanced_accuracy": "0.6505 \u00b1 0.0242",
+      "accuracy": "0.6355 \u00b1 0.0108",
+      "recall_class_0": "0.6123 \u00b1 0.0300",
+      "recall_class_1": "0.6887 \u00b1 0.0718",
+      "roc_auc": "0.6993 \u00b1 0.0256"
+    },
+    {
+      "experiment": "Exp B (Primary + Duration)",
+      "model": "Dummy (Most Frequent)",
+      "macro_f1": "0.4110 \u00b1 0.0012",
+      "balanced_accuracy": "0.5000 \u00b1 0.0000",
+      "accuracy": "0.6977 \u00b1 0.0034",
+      "recall_class_0": "1.0000 \u00b1 0.0000",
+      "recall_class_1": "0.0000 \u00b1 0.0000",
+      "roc_auc": "0.5000 \u00b1 0.0000"
+    },
+    {
+      "experiment": "Exp B (Primary + Duration)",
+      "model": "Dummy (Stratified)",
+      "macro_f1": "0.5089 \u00b1 0.0145",
+      "balanced_accuracy": "0.5089 \u00b1 0.0145",
+      "accuracy": "0.5853 \u00b1 0.0125",
+      "recall_class_0": "0.7021 \u00b1 0.0100",
+      "recall_class_1": "0.3157 \u00b1 0.0191",
+      "roc_auc": "0.5089 \u00b1 0.0145"
+    },
+    {
+      "experiment": "Exp B (Primary + Duration)",
+      "model": "Logistic Regression (Unweighted)",
+      "macro_f1": "0.6268 \u00b1 0.0303",
+      "balanced_accuracy": "0.6198 \u00b1 0.0253",
+      "accuracy": "0.7358 \u00b1 0.0152",
+      "recall_class_0": "0.9136 \u00b1 0.0148",
+      "recall_class_1": "0.3259 \u00b1 0.0565",
+      "roc_auc": "0.7253 \u00b1 0.0319"
+    },
+    {
+      "experiment": "Exp B (Primary + Duration)",
+      "model": "Logistic Regression (Balanced)",
+      "macro_f1": "0.6581 \u00b1 0.0134",
+      "balanced_accuracy": "0.6743 \u00b1 0.0167",
+      "accuracy": "0.6905 \u00b1 0.0110",
+      "recall_class_0": "0.7153 \u00b1 0.0039",
+      "recall_class_1": "0.6334 \u00b1 0.0315",
+      "roc_auc": "0.7251 \u00b1 0.0321"
+    },
+    {
+      "experiment": "Exp B (Primary + Duration)",
+      "model": "Random Forest (Unweighted)",
+      "macro_f1": "0.5947 \u00b1 0.0340",
+      "balanced_accuracy": "0.5947 \u00b1 0.0261",
+      "accuracy": "0.7286 \u00b1 0.0191",
+      "recall_class_0": "0.9337 \u00b1 0.0112",
+      "recall_class_1": "0.2558 \u00b1 0.0485",
+      "roc_auc": "0.7389 \u00b1 0.0297"
+    },
+    {
+      "experiment": "Exp B (Primary + Duration)",
+      "model": "Random Forest (Balanced)",
+      "macro_f1": "0.6531 \u00b1 0.0127",
+      "balanced_accuracy": "0.6757 \u00b1 0.0157",
+      "accuracy": "0.6799 \u00b1 0.0122",
+      "recall_class_0": "0.6863 \u00b1 0.0152",
+      "recall_class_1": "0.6652 \u00b1 0.0322",
+      "roc_auc": "0.7379 \u00b1 0.0279"
+    }
+  ]
+}
