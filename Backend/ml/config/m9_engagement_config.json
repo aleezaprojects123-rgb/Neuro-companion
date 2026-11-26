@@ -1,0 +1,23 @@
+{
+  "model_id": "M9_ENGAGEMENT",
+  "model_name": "Engagement and Session Intelligence",
+  "version": "1.0.0",
+  "architecture_type": "deterministic_session_pacing_and_fatigue_estimator",
+  "supported_assistance_strategies": [
+    "AS08_BREAK_PAUSE"
+  ],
+  "dataset_sources": {
+    "brainit_adherence": "data/processed/phase4/adherence_engagement/brainit_adherence_prepared.csv",
+    "tablet_rct": "data/processed/phase4/adherence_engagement/tablet_rct_prepared.csv"
+  },
+  "scientific_checks": {
+    "patient_controlled_break_sovereignty": "Enforces strict clinical patient autonomy: Session-break suggestions are presented as optional, gentle invitations from Carl with a clear 'Keep Playing' option. Automatic forced lockouts or involuntary pauses are strictly prohibited.",
+    "session_duration_calibration": "Informs reasonable session duration boundaries (15-25 minutes based on Brain-IT and Tablet RCT clinical protocols) to prevent cognitive exhaustion without imposing arbitrary stopping points."
+  },
+  "runtime_policy": {
+    "recommended_session_duration_minutes": 20,
+    "inactivity_pause_threshold_seconds": 45,
+    "allow_patient_dismissal": true,
+    "allow_caregiver_override": true
+  }
+}

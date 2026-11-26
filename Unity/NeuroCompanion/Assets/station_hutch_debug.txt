@@ -1,0 +1,72 @@
+STATION CHILDREN:
+Structure_Frame: localPos=(0.00, 0.00, 0.00), bounds=none
+  - Leg_FrontLeft: localPos=(-0.70, 0.43, -0.30), bounds=Center: (9.48, 0.43, 2.24), Extents: (0.05, 0.43, 0.05)
+  - Leg_FrontRight: localPos=(0.70, 0.43, -0.30), bounds=Center: (10.07, 0.43, 3.51), Extents: (0.05, 0.43, 0.05)
+  - Leg_BackLeft: localPos=(-0.70, 0.43, 0.30), bounds=Center: (8.93, 0.43, 2.49), Extents: (0.05, 0.43, 0.05)
+  - Leg_BackRight: localPos=(0.70, 0.43, 0.30), bounds=Center: (9.52, 0.43, 3.76), Extents: (0.05, 0.43, 0.05)
+  - Apron_Front: localPos=(0.00, 0.83, -0.30), bounds=Center: (9.77, 0.83, 2.87), Extents: (0.30, 0.04, 0.61)
+  - Apron_Back: localPos=(0.00, 0.83, 0.30), bounds=Center: (9.23, 0.83, 3.13), Extents: (0.30, 0.04, 0.61)
+  - Apron_Left: localPos=(-0.70, 0.83, 0.00), bounds=Center: (9.20, 0.83, 2.36), Extents: (0.25, 0.04, 0.13)
+  - Apron_Right: localPos=(0.70, 0.83, 0.00), bounds=Center: (9.80, 0.83, 3.64), Extents: (0.25, 0.04, 0.13)
+  - Crossbrace_Left: localPos=(-0.70, 0.45, 0.00), bounds=Center: (9.20, 0.45, 2.36), Extents: (0.25, 0.02, 0.13)
+  - Crossbrace_Right: localPos=(0.70, 0.45, 0.00), bounds=Center: (9.80, 0.45, 3.64), Extents: (0.25, 0.02, 0.13)
+Work_Tabletop: localPos=(0.00, 0.00, 0.00), bounds=none
+  - Tabletop_Plank_1: localPos=(0.00, 0.87, -0.30), bounds=Center: (9.77, 0.87, 2.87), Extents: (0.37, 0.01, 0.70)
+  - Tabletop_Plank_2: localPos=(0.00, 0.87, -0.18), bounds=Center: (9.66, 0.87, 2.92), Extents: (0.37, 0.01, 0.70)
+  - Tabletop_Plank_3: localPos=(0.00, 0.87, -0.06), bounds=Center: (9.55, 0.87, 2.97), Extents: (0.37, 0.01, 0.70)
+  - Tabletop_Plank_4: localPos=(0.00, 0.87, 0.06), bounds=Center: (9.45, 0.87, 3.03), Extents: (0.37, 0.01, 0.70)
+  - Tabletop_Plank_5: localPos=(0.00, 0.87, 0.18), bounds=Center: (9.34, 0.87, 3.08), Extents: (0.37, 0.01, 0.70)
+  - Tabletop_Plank_6: localPos=(0.00, 0.87, 0.30), bounds=Center: (9.23, 0.87, 3.13), Extents: (0.37, 0.01, 0.70)
+  - Back_Retaining_Rail: localPos=(0.00, 0.93, 0.34), bounds=Center: (9.19, 0.93, 3.14), Extents: (0.33, 0.05, 0.68)
+  - Side_Retaining_Rail_Left: localPos=(-0.74, 0.93, -0.01), bounds=Center: (9.20, 0.93, 2.33), Extents: (0.31, 0.05, 0.15)
+  - Side_Retaining_Rail_Right: localPos=(0.74, 0.93, -0.01), bounds=Center: (9.82, 0.93, 3.66), Extents: (0.31, 0.05, 0.15)
+  - Front_Comfort_Trim: localPos=(0.00, 0.87, -0.36), bounds=Center: (9.83, 0.87, 2.85), Extents: (0.33, 0.02, 0.69)
+  - Tabletop_WorkSurface_Collider: localPos=(0.00, 0.88, 0.00), bounds=none
+Lower_Storage_Shelf: localPos=(0.00, 0.00, 0.00), bounds=none
+  - Shelf_Support_Front: localPos=(0.00, 0.20, -0.28), bounds=Center: (9.75, 0.20, 2.88), Extents: (0.30, 0.03, 0.62)
+  - Shelf_Support_Back: localPos=(0.00, 0.20, 0.28), bounds=Center: (9.25, 0.20, 3.12), Extents: (0.30, 0.03, 0.62)
+  - Shelf_Plank_1: localPos=(0.00, 0.23, -0.23), bounds=Center: (9.71, 0.23, 2.90), Extents: (0.33, 0.01, 0.64)
+  - Shelf_Plank_2: localPos=(0.00, 0.23, -0.12), bounds=Center: (9.61, 0.23, 2.95), Extents: (0.33, 0.01, 0.64)
+  - Shelf_Plank_3: localPos=(0.00, 0.23, 0.00), bounds=Center: (9.50, 0.23, 3.00), Extents: (0.33, 0.01, 0.64)
+  - Shelf_Plank_4: localPos=(0.00, 0.23, 0.12), bounds=Center: (9.39, 0.23, 3.05), Extents: (0.33, 0.01, 0.64)
+  - Shelf_Plank_5: localPos=(0.00, 0.23, 0.23), bounds=Center: (9.29, 0.23, 3.10), Extents: (0.33, 0.01, 0.64)
+Upper_Hutch_Trellis: localPos=(0.00, 0.00, 0.00), bounds=none
+  - Hutch_Post_Left: localPos=(-0.70, 1.16, 0.30), bounds=Center: (8.93, 1.16, 2.49), Extents: (0.04, 0.30, 0.04)
+  - Hutch_Post_Right: localPos=(0.70, 1.16, 0.30), bounds=Center: (9.52, 1.16, 3.76), Extents: (0.04, 0.30, 0.04)
+  - Trellis_Slat_1: localPos=(0.00, 1.05, 0.30), bounds=Center: (9.23, 1.05, 3.13), Extents: (0.32, 0.02, 0.67)
+  - Trellis_Slat_2: localPos=(0.00, 1.15, 0.30), bounds=Center: (9.23, 1.15, 3.13), Extents: (0.32, 0.02, 0.67)
+  - Trellis_Slat_3: localPos=(0.00, 1.24, 0.30), bounds=Center: (9.23, 1.24, 3.13), Extents: (0.32, 0.02, 0.67)
+  - Trellis_Slat_4: localPos=(0.00, 1.34, 0.30), bounds=Center: (9.23, 1.34, 3.13), Extents: (0.32, 0.02, 0.67)
+  - Top_Utility_Shelf: localPos=(0.00, 1.44, 0.24), bounds=Center: (9.29, 1.44, 3.10), Extents: (0.41, 0.01, 0.72)
+  - Top_Shelf_Lip: localPos=(0.00, 1.47, 0.33), bounds=Center: (9.21, 1.47, 3.14), Extents: (0.33, 0.02, 0.68)
+  - Peg_Rail: localPos=(0.00, 1.00, 0.29), bounds=Center: (9.24, 1.00, 3.12), Extents: (0.31, 0.02, 0.64)
+  - Hanging_Peg_1: localPos=(-0.45, 1.00, 0.25), bounds=Center: (9.09, 1.00, 2.70), Extents: (0.04, 0.01, 0.02)
+  - Hanging_Peg_2: localPos=(-0.15, 1.00, 0.25), bounds=Center: (9.21, 1.00, 2.97), Extents: (0.04, 0.01, 0.02)
+  - Hanging_Peg_3: localPos=(0.15, 1.00, 0.25), bounds=Center: (9.34, 1.00, 3.24), Extents: (0.04, 0.01, 0.02)
+  - Hanging_Peg_4: localPos=(0.45, 1.00, 0.25), bounds=Center: (9.47, 1.00, 3.51), Extents: (0.04, 0.01, 0.02)
+Plant_Pots: localPos=(0.00, 0.00, 0.00), bounds=none
+  - PlantPot_Medium_01: localPos=(-0.48, 0.88, 0.16), bounds=Center: (9.15, 0.98, 2.63), Extents: (0.16, 0.10, 0.16)
+  - PlantPot_Small_01: localPos=(-0.28, 0.88, 0.20), bounds=Center: (9.20, 0.94, 2.83), Extents: (0.07, 0.06, 0.07)
+  - PlantPot_Medium_02: localPos=(-0.42, 0.24, -0.05), bounds=Center: (9.37, 0.34, 2.60), Extents: (0.15, 0.10, 0.15)
+  - PlantPot_Medium_03: localPos=(-0.16, 0.24, -0.05), bounds=Center: (9.48, 0.34, 2.83), Extents: (0.14, 0.10, 0.14)
+  - PlantPot_Small_02: localPos=(0.24, 0.24, -0.08), bounds=Center: (9.67, 0.30, 3.18), Extents: (0.07, 0.06, 0.07)
+  - PlantPot_Small_03: localPos=(0.40, 0.24, -0.08), bounds=Center: (9.74, 0.30, 3.33), Extents: (0.10, 0.06, 0.10)
+  - PlantPot_Small_04: localPos=(0.35, 1.45, 0.24), bounds=Center: (9.43, 1.51, 3.42), Extents: (0.09, 0.06, 0.09)
+Gardening_Trowel: localPos=(-0.06, 0.88, 0.12), bounds=none
+  - Trowel_Blade: localPos=(0.00, 0.00, 0.00), bounds=Center: (9.40, 0.89, 2.93), Extents: (0.07, 0.02, 0.08)
+  - Trowel_Neck_Tang: localPos=(0.00, 0.01, 0.02), bounds=Center: (9.35, 0.90, 3.04), Extents: (0.02, 0.02, 0.02)
+  - Trowel_Ferrule: localPos=(0.00, 0.02, 0.05), bounds=Center: (9.34, 0.90, 3.05), Extents: (0.02, 0.01, 0.01)
+  - Trowel_Handle: localPos=(0.00, 0.03, 0.06), bounds=Center: (9.32, 0.92, 3.10), Extents: (0.04, 0.03, 0.06)
+  - Trowel_Interaction_Collider: localPos=(0.00, 0.00, 0.00), bounds=none
+Watering_Can: localPos=(-0.24, 0.88, -0.04), bounds=none
+  - WateringCan_Body: localPos=(0.00, 0.00, 0.00), bounds=Center: (9.43, 1.06, 2.77), Extents: (0.20, 0.18, 0.20)
+  - WateringCan_Handle: localPos=(0.00, 0.00, 0.00), bounds=Center: (9.48, 1.17, 2.72), Extents: (0.08, 0.21, 0.09)
+  - WateringCan_Spout: localPos=(0.00, 0.05, 0.08), bounds=Center: (9.26, 0.81, 2.97), Extents: (0.12, 0.16, 0.14)
+  - WateringCan_Rose: localPos=(0.00, 0.23, 0.25), bounds=Center: (9.17, 1.21, 3.09), Extents: (0.08, 0.05, 0.08)
+Plant_Seedlings: localPos=(0.00, 0.00, 0.00), bounds=none
+  - Seedling_01: localPos=(0.14, 0.88, 0.04), bounds=none
+  - Seedling_02: localPos=(0.27, 0.88, 0.04), bounds=none
+  - Seedling_03: localPos=(0.40, 0.88, 0.04), bounds=none
+  - Seedling_04: localPos=(0.14, 0.88, 0.16), bounds=none
+  - Seedling_05: localPos=(0.27, 0.88, 0.16), bounds=none
+  - Seedling_06: localPos=(0.40, 0.88, 0.16), bounds=none

@@ -1,0 +1,35 @@
+{
+  "model_id": "M3_TASK_PERF",
+  "model_name": "Task Performance Intelligence",
+  "version": "1.0.0",
+  "architecture_type": "supervised_count_and_classification",
+  "supported_assistance_strategies": [
+    "AS01_REPEAT_INSTRUCTION",
+    "AS03_STEP_BY_STEP",
+    "AS04_VISUAL_HINT"
+  ],
+  "dataset_source": {
+    "file_path": "data/processed/phase4/activity_task/robot_games_prepared.csv",
+    "group_col": "participant_id",
+    "target_col": "errors_count",
+    "feature_cols": [
+      "game_type",
+      "game_reaction_time_ms",
+      "touch_interaction_flag"
+    ]
+  },
+  "scientific_checks": {
+    "feature_timing_integrity": "Strictly restricts input features to pre-interaction and trial-onset variables (stimulus type, reaction time to first touch). Post-trial variables such as total game completion time or overall session score are prohibited to prevent leakage.",
+    "participant_level_grouping": "Enforces GroupKFold grouped by participant_id (N=20 older adults, 436 game rounds) so no subject's individual motor profile appears simultaneously in training and validation folds."
+  },
+  "validation_strategy": {
+    "method": "GroupKFold",
+    "n_splits": 5,
+    "group_col": "participant_id"
+  },
+  "evaluation_metrics": [
+    "mean_absolute_error",
+    "balanced_accuracy_error_burst",
+    "recall_multiple_errors"
+  ]
+}

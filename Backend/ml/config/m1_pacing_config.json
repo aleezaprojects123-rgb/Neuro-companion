@@ -1,0 +1,40 @@
+{
+  "model_id": "M1_PACING",
+  "model_name": "Pacing and Latency Intelligence",
+  "version": "1.0.0",
+  "architecture_type": "parametric_distribution_estimator",
+  "supported_assistance_strategies": [
+    "AS06_SLOWER_SPEECH",
+    "AS07_ADDITIONAL_TIME"
+  ],
+  "dataset_sources": {
+    "msl_motor": {
+      "file_path": "data/processed/phase4/latency_pacing/msl_tapping_prepared.csv",
+      "group_col": "participant_id",
+      "target_col": "mean_motor_tapping_rt_ms",
+      "feature_cols": ["age_group", "is_older_adult_cohort", "std_motor_tapping_rt_ms"],
+      "domain": "psychomotor_tapping_latency"
+    },
+    "nback_cognitive": {
+      "file_path": "data/processed/phase4/latency_pacing/nback_latency_prepared.csv",
+      "group_col": "participant_id",
+      "target_col": "mean_working_memory_rt_ms",
+      "feature_cols": ["dementia_speed_group", "baseline_mmse", "std_working_memory_rt_ms"],
+      "domain": "working_memory_retrieval_latency"
+    }
+  },
+  "scientific_checks": {
+    "distribution_separation": "MSL and N-Back distributions are modeled independently to avoid conflating motor execution speed with cognitive working memory retrieval delay.",
+    "circularity_protection": "Target is observed empirical latency. The model estimates conservative timeout percentiles (mu + 2.5 * sigma) rather than regressing a circular z-score from its own input features."
+  },
+  "validation_strategy": {
+    "method": "GroupKFold",
+    "n_splits": 5,
+    "group_col": "participant_id"
+  },
+  "evaluation_metrics": [
+    "mean_absolute_error",
+    "false_positive_timeout_rate",
+    "coverage_95_percentile"
+  ]
+}

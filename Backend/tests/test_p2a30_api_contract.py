@@ -18,7 +18,9 @@ Verifies:
 
 import asyncio
 import json
+import os
 import sys
+import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,6 +32,12 @@ if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
 from main import app, API_VERSION, API_PREFIX  # noqa: E402
+import telemetry.database as db_mod
+import telemetry.routes as routes_mod
+import telemetry.extended_database as extended_db_mod
+import telemetry.extended_routes as extended_routes_mod
+from telemetry.database import Database
+from telemetry.extended_database import ExtendedDatabase
 
 
 # ---------------------------------------------------------------------------
@@ -94,10 +102,40 @@ class TestP2A30APIContractFreeze(unittest.TestCase):
     """P2A-30: Full API contract freeze verification."""
 
     _lifespan_ctx = None
+    _temp_file = None
+    _temp_db_path = None
+    _orig_telemetry_routes_db = None
+    _orig_telemetry_database_db = None
+    _orig_ext_routes_db = None
+    _orig_ext_database_db = None
+    _orig_ext_database_ext_db = None
 
     @classmethod
     def setUpClass(cls):
-        """Start FastAPI lifespan (loads ML model) once for the whole suite."""
+        """Start FastAPI lifespan (loads ML model) and configure isolated temporary SQLite DB."""
+        # 1. Create an isolated temporary SQLite database
+        cls._temp_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        cls._temp_db_path = cls._temp_file.name
+        cls._temp_file.close()
+
+        # 2. Initialise isolated Database and ExtendedDatabase instances on temp file
+        cls._test_db = Database(db_path=cls._temp_db_path)
+        cls._test_ext_db = ExtendedDatabase(db_path=cls._temp_db_path)
+
+        # 3. Patch module singletons to use the temporary database
+        cls._orig_telemetry_routes_db = routes_mod.db
+        cls._orig_telemetry_database_db = db_mod.db
+        routes_mod.db = cls._test_db
+        db_mod.db = cls._test_db
+
+        cls._orig_ext_routes_db = extended_routes_mod.extended_db
+        cls._orig_ext_database_db = extended_db_mod.extended_db
+        cls._orig_ext_database_ext_db = extended_db_mod.ext_db
+        extended_routes_mod.extended_db = cls._test_ext_db
+        extended_db_mod.extended_db = cls._test_ext_db
+        extended_db_mod.ext_db = cls._test_ext_db
+
+        # 4. Start FastAPI lifespan
         async def _startup():
             ctx = app.router.lifespan_context(app)
             await ctx.__aenter__()
@@ -106,7 +144,8 @@ class TestP2A30APIContractFreeze(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """Shut down FastAPI lifespan cleanly."""
+        """Shut down FastAPI lifespan and clean up temporary database."""
+        # 1. Shut down lifespan
         if cls._lifespan_ctx is not None:
             async def _shutdown():
                 await cls._lifespan_ctx.__aexit__(None, None, None)
@@ -114,6 +153,28 @@ class TestP2A30APIContractFreeze(unittest.TestCase):
                 asyncio.run(_shutdown())
             except Exception:
                 pass
+
+        # 2. Restore original module singletons
+        if cls._orig_telemetry_routes_db is not None:
+            routes_mod.db = cls._orig_telemetry_routes_db
+        if cls._orig_telemetry_database_db is not None:
+            db_mod.db = cls._orig_telemetry_database_db
+        if cls._orig_ext_routes_db is not None:
+            extended_routes_mod.extended_db = cls._orig_ext_routes_db
+        if cls._orig_ext_database_db is not None:
+            extended_db_mod.extended_db = cls._orig_ext_database_db
+        if cls._orig_ext_database_ext_db is not None:
+            extended_db_mod.ext_db = cls._orig_ext_database_ext_db
+
+        # 3. Remove temporary database files
+        if cls._temp_db_path and os.path.exists(cls._temp_db_path):
+            for suffix in ["", "-wal", "-shm"]:
+                p = cls._temp_db_path + suffix
+                if os.path.exists(p):
+                    try:
+                        os.remove(p)
+                    except Exception:
+                        pass
 
     # ------------------------------------------------------------------
     # 1. API version constants

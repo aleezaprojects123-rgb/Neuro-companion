@@ -1,0 +1,26 @@
+{
+  "model_id": "M8_SPEECH",
+  "model_name": "Speech Intelligence",
+  "version": "1.0.0",
+  "architecture_type": "acoustic_prosody_reference_and_heuristic_presets",
+  "supported_assistance_strategies": [
+    "AS06_SLOWER_SPEECH"
+  ],
+  "dataset_source": {
+    "file_path": "data/processed/phase4/speech_acoustic/chinese1_egemaps_prepared.csv",
+    "group_col": "session_id",
+    "feature_cols": [
+      "F0semitoneFrom27.5Hz_sma3nz_amean",
+      "F0semitoneFrom27.5Hz_sma3nz_stddevNorm",
+      "F0semitoneFrom27.5Hz_sma3nz_meanRisingSlope"
+    ]
+  },
+  "runtime_policy": {
+    "speech_rate_multipliers": {
+      "standard": 1.0,
+      "gentle_slow": 0.85,
+      "maximum_clarity": 0.75
+    },
+    "caregiver_controlled": true
+  }
+}

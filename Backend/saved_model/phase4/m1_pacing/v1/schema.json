@@ -1,0 +1,17 @@
+{
+  "model_id": "M1_PACING",
+  "model_name": "Pacing & Response Latency Estimator",
+  "version": "1.0.0",
+  "architecture_type": "parametric_lognormal_density_estimator",
+  "supported_assistance_strategies": [
+    "AS07_ADDITIONAL_RESPONSE_TIME"
+  ],
+  "input_features": [
+    "response_latency_ms",
+    "task_domain"
+  ],
+  "output_references": [
+    "percentile_rank",
+    "suggested_response_window_ms"
+  ]
+}

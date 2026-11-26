@@ -1,0 +1,23 @@
+{
+  "model_id": "M5_INTERACTION",
+  "model_name": "Interaction Pattern Intelligence",
+  "version": "1.0.0",
+  "architecture_type": "unsupervised_pause_density_clustering",
+  "supported_assistance_strategies": [
+    "AS01_REPEAT_INSTRUCTION",
+    "AS07_ADDITIONAL_TIME",
+    "AS08_BREAK_PAUSE"
+  ],
+  "dataset_source": {
+    "file_path": "data/processed/phase4/activity_task/casas_iadl_prepared.csv",
+    "group_col": "participant_id",
+    "feature_cols": [
+      "hesitation_pause_count_5s",
+      "max_pause_sec",
+      "pause_to_duration_ratio"
+    ]
+  },
+  "scientific_checks": {
+    "unsupervised_exploratory_scope": "Evaluates hesitation density distributions. Does NOT claim unsupervised clusters represent clinical neurological diagnoses or definitive patient fatigue states without ground-truth clinical corroboration."
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "dataset_rows": 436,
+  "unique_participants": 20,
+  "validation_strategy": "5-Fold GroupKFold strictly on participant_id",
+  "cohort_characteristics": "Healthy Older Adults (MMSE 28.65 +/- 1.65; normative cognitive aging baseline)",
+  "zero_count_percentage": 77.52,
+  "error_occurrence_classifier": {
+    "dummy_baseline_balanced_accuracy": 0.5,
+    "hurdle_classifier_balanced_accuracy": 0.6406,
+    "roc_auc": 0.6838
+  },
+  "error_count_regressor": {
+    "dummy_baseline_mae_median": 0.4654,
+    "hurdle_count_mae": 0.5298,
+    "performance_note": "Trivial median-zero baseline has lower MAE (0.465) due to 77.5% zeros; Hurdle model achieves 64.06% balanced accuracy on detecting non-zero error episodes."
+  }
+}

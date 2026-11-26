@@ -1,0 +1,191 @@
+{
+  "manifest_version": "1.0.0",
+  "created_at": "2026-11-17T20:00:00Z",
+  "datasets": {
+    "oasis_1": {
+      "name": "OASIS-1 (Open Access Series of Imaging Studies)",
+      "version": "1.0",
+      "format": "csv",
+      "relative_path": "data/processed/oasis_preprocessed.csv",
+      "sample_size": 416,
+      "population": "Cross-sectional older adults (ages 18-96, CDR 0-2)",
+      "license": "OASIS Open Data Use Agreement",
+      "legitimate_scope": "clinical_cdr_estimation_baseline",
+      "verified_labels": ["CDR", "nWBV", "eTIV", "MMSE"],
+      "phase_frozen": "Phase 1"
+    },
+    "casas": {
+      "name": "CASAS Cognitive Assessment Smart Home Dataset",
+      "version": "1.0",
+      "format": "csv",
+      "relative_path": "research_archive/casas_phase2_exploratory/data/casas/extracted/task_audit_data.csv",
+      "archive_path": "research_archive/cognitive_assessment.zip",
+      "sample_size": 339,
+      "population": "Community older adults performing instrumental activities in smart home",
+      "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+      "legitimate_scope": "task_audit_duration_and_pause_analysis",
+      "verified_labels": ["score", "tier", "duration", "pause_cnt_5_int", "max_pause_int"],
+      "notes": "Original score reflects activity completion score; tier reflects processing step"
+    },
+    "tihm": {
+      "name": "TIHM (Technology Integrated Health Management) for Dementia",
+      "version": "1.0",
+      "format": "zip_archive",
+      "relative_path": "research_archive/TIHM_Dataset.zip",
+      "sample_size": 54,
+      "population": "People living with dementia monitored via home IoT telemonitoring sensors",
+      "license": "Open Government / University of Surrey Restricted Research Deposit",
+      "legitimate_scope": "ambient_iot_safety_telemonitoring_context",
+      "verified_labels": ["environmental_sensors", "blood_pressure", "vital_signs"],
+      "notes": "Contains passive IoT sensor events, no digital UI assistance labels"
+    },
+    "ai4hope": {
+      "name": "AI4HOPE Palliative Care Conversational AI Dataset",
+      "version": "1.0",
+      "format": "csv_collection",
+      "relative_path": "research_archive/",
+      "files": [
+        "expert_prompts.csv",
+        "participants_users.csv",
+        "response_ratings.csv",
+        "session_logs.csv",
+        "codebook.csv"
+      ],
+      "sample_size": 120,
+      "user_breakdown": {
+        "experts": 60,
+        "caregivers": 60
+      },
+      "interactions_count": 600,
+      "population": "60 dementia clinical/palliative experts and 60 family caregivers",
+      "license": "Open Access / EU Open Science (Horizon Europe / UKRI)",
+      "legitimate_scope": "conversational_nlp_response_quality_and_caregiver_support",
+      "verified_labels": [
+        "answer_rating_empathy",
+        "answer_rating_actionability",
+        "answer_rating_relevance",
+        "answer_rating_clarity",
+        "answer_rating_information_support",
+        "answer_rating_supported_at_ease",
+        "answer_rating_ease_of_understanding"
+      ],
+      "leakage_rules": "Mandatory GroupKFold grouped on user_id across the 60 experts/caregivers"
+    },
+    "brain_it": {
+      "name": "Brain-IT Exergame Motor-Cognitive RCT Dataset",
+      "version": "1.0",
+      "format": "xlsx",
+      "relative_path": "research_archive/Data_Brain-IT_RCT_for-publication.xlsx",
+      "documentation_path": "research_archive/README-file_Data_Brain-IT-RCT.txt",
+      "sample_size": 41,
+      "intervention_group_size": 21,
+      "population": "Older adults with mild neurocognitive disorder (61% Alzheimer's disease)",
+      "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+      "legitimate_scope": "longitudinal_adherence_and_attendance_drop_off_dynamics",
+      "verified_labels": [
+        "pat_allocation",
+        "weekly_attendance_sessions_w1_to_w12",
+        "weekly_duration_minutes_w1_to_w12",
+        "reasons_for_non_adherence",
+        "qmci_score_tot_pre_post"
+      ],
+      "leakage_rules": "Sample size N=41 strictly for adherence modeling, not population normalization"
+    },
+    "vase": {
+      "name": "VASE (Video Analysis Scale of Engagement) Dataset",
+      "version": "1.0",
+      "format": "xlsx",
+      "relative_path": "research_archive/Complete data set, Lai et al..xlsx",
+      "sample_size": 11,
+      "raters_count": 37,
+      "clips_count": 48,
+      "total_rows": 44400,
+      "population": "11 subjects with advanced dementia observed during music and arts sessions",
+      "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+      "legitimate_scope": "observational_engagement_dynamics_and_inter_rater_reliability",
+      "verified_labels": ["Rating (1-7 Likert)", "Passive", "Session", "Seconds (6-30)"],
+      "leakage_rules": "Clips are 25s observational slices in live music; cannot be used as software inactivity timer"
+    },
+    "canterbury_wellbeing": {
+      "name": "Canterbury Wellbeing Scales for People with Dementia",
+      "version": "1.0",
+      "format": "xlsx",
+      "relative_path": "research_archive/Phase4_New_Datasets/Canterbury Wellbeing Scales raw dataset.xlsx",
+      "sample_size": 201,
+      "population": "People living with diagnosed dementia (45.8% Alzheimer's) attending museum/arts sessions",
+      "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+      "legitimate_scope": "reminiscence_and_tactile_object_handling_wellbeing_outcomes",
+      "verified_labels": [
+        "Composite CWS pre",
+        "Composite CWS post",
+        "Composite CWS change",
+        "Interest change",
+        "Confidence change",
+        "Optimism change",
+        "Happy change",
+        "Well change"
+      ]
+    },
+    "robot_cognitive_training": {
+      "name": "Social Robot Cognitive Training with LLM Prompts",
+      "version": "1.0",
+      "format": "zip_archive",
+      "relative_path": "research_archive/Phase4_New_Datasets/data&prompts.zip",
+      "sample_size": 20,
+      "game_runs_count": 437,
+      "sessions_count": 82,
+      "population": "20 healthy older adults (MMSE 28.65) interacting with social robot",
+      "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+      "legitimate_scope": "reminiscence_task_generation_and_dual_modality_touch_voice_benchmarking",
+      "verified_labels": [
+        "type (StoryQuizGame, CompleteGame, RealEventGame, ReorderGame)",
+        "current_level (easy, medium, hard)",
+        "gameReactTime",
+        "gameTime",
+        "numErrors",
+        "touch_interaction",
+        "vocal_interaction"
+      ]
+    },
+    "motor_sequence_learning": {
+      "name": "Motor Sequence Learning Across the Lifespan",
+      "version": "1.0",
+      "format": "xlsx_and_zip",
+      "relative_path": "research_archive/Phase4_New_Datasets/FiguresTables_SourceData.xlsx",
+      "raw_archives": ["Experiment 1.zip", "Experiment 2.zip"],
+      "sample_size": 130,
+      "older_adults_sample_size": 32,
+      "population": "Healthy individuals across the lifespan (32 healthy older adults ages 60-80)",
+      "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+      "legitimate_scope": "healthy_older_adult_psychomotor_latency_and_accuracy_baseline",
+      "verified_labels": ["Reaction time (ms)", "Accuracy (0/1)", "Block number", "Cue presented"]
+    },
+    "n_back_dementia": {
+      "name": "N-Back Working Memory and tDCS in Dementia",
+      "version": "1.0",
+      "format": "xlsx",
+      "relative_path": "research_archive/Phase4_New_Datasets/Reproducibility_Data_SI_Modified.xlsx",
+      "sample_size": 24,
+      "population": "24 dementia participants stratified by baseline speed (12 normal RT, 12 slower RT)",
+      "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+      "legitimate_scope": "dementia_working_memory_latency_bifurcation_and_pacing_limits",
+      "verified_labels": [
+        "BT1-BT3 (Bilateral RT)",
+        "UT1-UT3 (Unilateral RT)",
+        "ST1-ST3 (Sham RT)",
+        "MMSE scores across rounds"
+      ]
+    },
+    "alzheimers_tablet_rct": {
+      "name": "6-Month Tablet-Based Multimodal Training RCT (Zuschnegg et al., PLOS ONE 2025)",
+      "version": "1.0",
+      "format": "xlsx",
+      "relative_path": "research_archive/DATA - The effect of a 6-month tablet-based multimodal training for cognitive functioning in Alzheimer’s disease in a randomized controlled trial.xlsx",
+      "sample_size": 25,
+      "population": "25 individuals with mild-to-moderate Alzheimer's disease (13 intervention, 12 control)",
+      "license": "Creative Commons Attribution 4.0 International (CC-BY 4.0)",
+      "legitimate_scope": "macro_clinical_efficacy_prior_tablet_cognitive_stabilization",
+      "verified_labels": ["bl_mmse_total", "fup_mmse_total", "fup_mmse_total_corr6months", "ig_cg"]
+    }
+  }
+}

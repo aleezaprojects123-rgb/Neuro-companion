@@ -1,0 +1,30 @@
+{
+  "model_id": "M10_UNIFIED",
+  "model_name": "Unified Assistance Decision Engine",
+  "version": "1.0.0",
+  "architecture_type": "deterministic_policy_and_multisignal_synthesizer",
+  "supported_assistance_strategies": [
+    "AS01_REPEAT_INSTRUCTION",
+    "AS02_SIMPLIFY_INSTRUCTION",
+    "AS03_STEP_BY_STEP",
+    "AS04_VISUAL_HINT",
+    "AS05_DEMONSTRATION",
+    "AS06_SLOWER_SPEECH",
+    "AS07_ADDITIONAL_TIME",
+    "AS08_BREAK_PAUSE",
+    "AS09_VERBAL_EXPLANATION",
+    "AS10_INDEPENDENT_COMPLETION"
+  ],
+  "engine_rules": {
+    "caregiver_lock_precedence": "If caregiver locked adaptive recommendations, lock is absolute (return None / maintain active tier).",
+    "patient_request_precedence": "Immediate patient assistance requests (e.g., clicking repeat or requesting hint) bypass all model reasoning and execute instantly.",
+    "submodel_signals": [
+      "M1_PACING: Provides conservative timeout bounds and pacing multipliers.",
+      "M2_LANGUAGE: Provides Flesch-Kincaid complexity alerts.",
+      "M3_TASK_PERF: Provides consecutive touch error risk estimates.",
+      "M4_INDEPENDENCE: Provides historical baseline autonomy prior.",
+      "M6_DIALOGUE: Evaluates clarity and empathy of Carl explanation text."
+    ],
+    "abstention_logic": "If submodel inputs are outside supported ranges or data is insufficient, conservative heuristic fallbacks are deployed."
+  }
+}

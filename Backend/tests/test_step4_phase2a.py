@@ -125,9 +125,27 @@ def run(coro):
 
 class TestStep4Phase2A(unittest.TestCase):
     _lifespan_ctx = None
+    _temp_file = None
+    _temp_db_path = None
+    _orig_telemetry_routes_db = None
+    _orig_telemetry_database_db = None
 
     @classmethod
     def setUpClass(cls):
+        cls._temp_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        cls._temp_db_path = cls._temp_file.name
+        cls._temp_file.close()
+
+        cls._test_db = Database(db_path=cls._temp_db_path)
+
+        import telemetry.routes as routes_mod
+        import telemetry.database as db_mod
+
+        cls._orig_telemetry_routes_db = routes_mod.db
+        cls._orig_telemetry_database_db = db_mod.db
+        routes_mod.db = cls._test_db
+        db_mod.db = cls._test_db
+
         async def _startup():
             ctx = app.router.lifespan_context(app)
             await ctx.__aenter__()
@@ -143,6 +161,23 @@ class TestStep4Phase2A(unittest.TestCase):
                 asyncio.run(_shutdown())
             except Exception:
                 pass
+
+        import telemetry.routes as routes_mod
+        import telemetry.database as db_mod
+
+        if cls._orig_telemetry_routes_db is not None:
+            routes_mod.db = cls._orig_telemetry_routes_db
+        if cls._orig_telemetry_database_db is not None:
+            db_mod.db = cls._orig_telemetry_database_db
+
+        if cls._temp_db_path and os.path.exists(cls._temp_db_path):
+            for suffix in ["", "-wal", "-shm"]:
+                p = cls._temp_db_path + suffix
+                if os.path.exists(p):
+                    try:
+                        os.remove(p)
+                    except Exception:
+                        pass
 
     # 1. New patient configuration without MMSE
     def test_01_onboard_new_patient_without_mmse(self):

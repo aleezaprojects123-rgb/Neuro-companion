@@ -1,0 +1,36 @@
+{
+  "model_id": "M6_DIALOGUE",
+  "model_name": "Dialogue Quality Intelligence",
+  "version": "1.0.0",
+  "architecture_type": "supervised_text_regression",
+  "supported_assistance_strategies": [
+    "AS09_VERBAL_EXPLANATION"
+  ],
+  "dataset_source": {
+    "file_path": "data/processed/phase4/conversational_text/ai4hope_dialogue_prepared.csv",
+    "group_col": "evaluator_id",
+    "target_cols": [
+      "target_empathy",
+      "target_actionability"
+    ],
+    "feature_cols": [
+      "question_text",
+      "answer_text",
+      "answer_style"
+    ]
+  },
+  "scientific_checks": {
+    "evaluator_grouping_integrity": "Enforces GroupKFold grouped by evaluator_id (N=60 clinical experts across 600 interactions) to prevent individual evaluator scoring bias from leaking between training and validation partitions.",
+    "auxiliary_dialogue_scope": "Evaluates candidate generated response strings before Carl voices them. Does NOT claim to predict whether a patient needs assistance; it strictly scores the clinical clarity and empathy of the explanation text itself."
+  },
+  "validation_strategy": {
+    "method": "GroupKFold",
+    "n_splits": 5,
+    "group_col": "evaluator_id"
+  },
+  "evaluation_metrics": [
+    "mean_absolute_error",
+    "quadratic_weighted_kappa",
+    "spearman_rank_correlation"
+  ]
+}

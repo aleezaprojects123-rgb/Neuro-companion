@@ -1,0 +1,103 @@
+file_name,column_name,dtype,description
+participants_experts.csv,user_id,object,Release-specific pseudonymous participant identifier used for linkage across deposited files.
+participants_experts.csv,study_group,object,Study subgroup label.
+participants_experts.csv,age_group,object,Participant age group captured at registration.
+participants_experts.csv,gender,object,Participant gender captured at registration.
+participants_experts.csv,relationship,object,Participant role/relationship to the study.
+participants_experts.csv,stage,object,Stage or caregiving stage reported at registration.
+participants_experts.csv,diagnosis,float64,Primary diagnosis captured at registration.
+participants_experts.csv,language,object,Preferred language or language used for the interaction.
+participants_experts.csv,device,object,Device(s) used by the participant.
+participants_experts.csv,tech_comfort,object,Self-reported comfort with technology.
+participants_experts.csv,tech_savviness,float64,Self-reported technology proficiency.
+participants_experts.csv,has_support,float64,Whether the participant reports having support.
+participants_experts.csv,experience,float64,Self-reported experience level.
+participants_experts.csv,occupation,object,Occupation or profession captured at registration.
+participants_experts.csv,queries_completed,int64,Number of completed queries recorded for the user.
+participants_experts.csv,sus_q1,float64,System Usability Scale item 1 response.
+participants_experts.csv,sus_q2,float64,System Usability Scale item 2 response.
+participants_experts.csv,sus_q3,float64,System Usability Scale item 3 response.
+participants_experts.csv,sus_q4,float64,System Usability Scale item 4 response.
+participants_experts.csv,sus_q5,float64,System Usability Scale item 5 response.
+participants_experts.csv,sus_q6,float64,System Usability Scale item 6 response.
+participants_experts.csv,sus_q7,float64,System Usability Scale item 7 response.
+participants_experts.csv,sus_q8,float64,System Usability Scale item 8 response.
+participants_experts.csv,sus_q9,float64,System Usability Scale item 9 response.
+participants_experts.csv,sus_q10,float64,System Usability Scale item 10 response.
+participants_experts.csv,sus_score,float64,Computed System Usability Scale score.
+participants_experts.csv,phase,object,Export phase label used to distinguish expert and patient/caregiver records.
+participants_users.csv,user_id,object,Release-specific pseudonymous participant identifier used for linkage across deposited files.
+participants_users.csv,study_group,object,Study subgroup label.
+participants_users.csv,age_group,object,Participant age group captured at registration.
+participants_users.csv,gender,object,Participant gender captured at registration.
+participants_users.csv,relationship,object,Participant role/relationship to the study.
+participants_users.csv,stage,float64,Stage or caregiving stage reported at registration.
+participants_users.csv,diagnosis,object,Primary diagnosis captured at registration.
+participants_users.csv,language,object,Preferred language or language used for the interaction.
+participants_users.csv,device,object,Device(s) used by the participant.
+participants_users.csv,tech_comfort,object,Self-reported comfort with technology.
+participants_users.csv,tech_savviness,int64,Self-reported technology proficiency.
+participants_users.csv,has_support,object,Whether the participant reports having support.
+participants_users.csv,experience,float64,Self-reported experience level.
+participants_users.csv,occupation,float64,Occupation or profession captured at registration.
+participants_users.csv,queries_completed,int64,Number of completed queries recorded for the user.
+participants_users.csv,sus_q1,int64,System Usability Scale item 1 response.
+participants_users.csv,sus_q2,int64,System Usability Scale item 2 response.
+participants_users.csv,sus_q3,int64,System Usability Scale item 3 response.
+participants_users.csv,sus_q4,int64,System Usability Scale item 4 response.
+participants_users.csv,sus_q5,int64,System Usability Scale item 5 response.
+participants_users.csv,sus_q6,int64,System Usability Scale item 6 response.
+participants_users.csv,sus_q7,int64,System Usability Scale item 7 response.
+participants_users.csv,sus_q8,int64,System Usability Scale item 8 response.
+participants_users.csv,sus_q9,int64,System Usability Scale item 9 response.
+participants_users.csv,sus_q10,int64,System Usability Scale item 10 response.
+participants_users.csv,sus_score,float64,Computed System Usability Scale score.
+participants_users.csv,phase,object,Export phase label used to distinguish expert and patient/caregiver records.
+expert_prompts.csv,user_id,object,Release-specific pseudonymous participant identifier used for linkage across deposited files.
+expert_prompts.csv,study_group,object,Study subgroup label.
+expert_prompts.csv,interaction_id,int64,Interaction identifier from the source master table.
+expert_prompts.csv,question,object,User or expert prompt text.
+expert_prompts.csv,answer_style,object,Selected response style or role-specific instruction label.
+expert_prompts.csv,answer,object,Generated AI answer text.
+expert_prompts.csv,language,object,Preferred language or language used for the interaction.
+expert_prompts.csv,relationship,object,Participant role/relationship to the study.
+expert_prompts.csv,answer_rating_relevance,int64,Expert rating of the generated response relevance.
+expert_prompts.csv,answer_rating_clarity,int64,Expert rating of the generated response clarity.
+expert_prompts.csv,answer_rating_empathy,int64,Expert rating of the generated response empathy.
+expert_prompts.csv,answer_rating_actionability,int64,Expert rating of the generated response actionability.
+expert_prompts.csv,answer_rating_misinformation_flagged,object,Whether the expert flagged misleading or dangerous information in the generated response.
+expert_prompts.csv,answer_rating_bias_flagged,object,Whether the expert flagged demographic bias in the generated response.
+source_ratings.csv,user_id,object,Release-specific pseudonymous participant identifier used for linkage across deposited files.
+source_ratings.csv,study_group,object,Study subgroup label.
+source_ratings.csv,interaction_id,int64,Interaction identifier from the source master table.
+source_ratings.csv,question,object,User or expert prompt text.
+source_ratings.csv,source_idx,int64,Derived or source-specific field included in the publication export.
+source_ratings.csv,source_title,object,Title of the rated source item.
+source_ratings.csv,source_ref,object,Source URL or source reference string for the rated item.
+source_ratings.csv,source_rating,float64,Numeric or categorical rating assigned to the source item.
+expert_sus.csv,user_id,object,Release-specific pseudonymous participant identifier used for linkage across deposited files.
+expert_sus.csv,study_group,object,Study subgroup label.
+expert_sus.csv,sus_q1,float64,System Usability Scale item 1 response.
+expert_sus.csv,sus_q2,float64,System Usability Scale item 2 response.
+expert_sus.csv,sus_q3,float64,System Usability Scale item 3 response.
+expert_sus.csv,sus_q4,float64,System Usability Scale item 4 response.
+expert_sus.csv,sus_q5,float64,System Usability Scale item 5 response.
+expert_sus.csv,sus_q6,float64,System Usability Scale item 6 response.
+expert_sus.csv,sus_q7,float64,System Usability Scale item 7 response.
+expert_sus.csv,sus_q8,float64,System Usability Scale item 8 response.
+expert_sus.csv,sus_q9,float64,System Usability Scale item 9 response.
+expert_sus.csv,sus_q10,float64,System Usability Scale item 10 response.
+expert_sus.csv,sus_score,float64,Computed System Usability Scale score.
+response_ratings.csv,user_id,object,Release-specific pseudonymous participant identifier used for linkage across deposited files.
+response_ratings.csv,study_group,object,Study subgroup label.
+response_ratings.csv,interaction_id,int64,Interaction identifier from the source master table.
+response_ratings.csv,answer_rating_role,object,Role label associated with the caregiver response rating.
+response_ratings.csv,answer_rating_information_support,int64,Caregiver rating of whether the response provided the information or support needed.
+response_ratings.csv,answer_rating_supported_at_ease,int64,Caregiver rating of whether the response made the participant feel supported or more at ease.
+response_ratings.csv,answer_rating_ease_of_understanding,int64,Caregiver rating of how easy the response was to understand.
+session_logs.csv,phase,object,Export phase label used to distinguish expert and patient/caregiver records.
+session_logs.csv,user_id,object,Release-specific pseudonymous participant identifier used for linkage across deposited files.
+session_logs.csv,study_group,object,Study subgroup label.
+session_logs.csv,session_id,object,"Release-specific pseudonymous session identifier, re-keyed consistently with the participant identifier."
+session_logs.csv,event_type,object,Derived event type in the session log export.
+session_logs.csv,interaction_id,float64,Interaction identifier from the source master table.

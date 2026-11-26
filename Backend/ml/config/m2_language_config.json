@@ -1,0 +1,32 @@
+{
+  "model_id": "M2_LANGUAGE",
+  "model_name": "Language Complexity Intelligence",
+  "version": "1.0.0",
+  "architecture_type": "hybrid_deterministic_and_supervised",
+  "supported_assistance_strategies": [
+    "AS02_SIMPLIFY_INSTRUCTION",
+    "AS09_VERBAL_EXPLANATION"
+  ],
+  "dataset_source": {
+    "file_path": "data/processed/phase4/shared_representations/shared_text_readability_prepared.csv",
+    "group_col": "text_unit_id",
+    "target_col": "is_accessible_grade_6",
+    "feature_cols": [
+      "mean_sentence_length_words",
+      "lexical_diversity_ttr",
+      "reading_grade_level"
+    ]
+  },
+  "scientific_checks": {
+    "distinct_responsibility_from_m6": "M2 handles structural and surface readability metrics calculated deterministically via closed-form equations (Flesch-Kincaid) plus lexical diversity gating. M6 handles subjective human clinician evaluation of empathy and actionability on multi-turn dialogue.",
+    "formula_vs_ml_separation": "Standard reading grade level is calculated directly via mathematical equations to prevent redundant machine learning approximation of closed-form formulas."
+  },
+  "validation_strategy": {
+    "method": "StratifiedKFold",
+    "n_splits": 5
+  },
+  "evaluation_metrics": [
+    "balanced_accuracy",
+    "macro_f1"
+  ]
+}

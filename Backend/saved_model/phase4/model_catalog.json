@@ -1,0 +1,180 @@
+{
+  "models": {
+    "M6_DIALOGUE": {
+      "v1.0.0": {
+        "artifact_path": "m6_dialogue/v1/model.joblib",
+        "sha256": "b651e2dfc6457e58b17a6720542b52a507ffbe6f6088846ee101e00d0b8427f4",
+        "trained_at": "2026-11-21T16:43:26.088408+00:00",
+        "status": "active",
+        "metrics": {
+          "dataset_rows": 600,
+          "unique_evaluators": 60,
+          "validation_strategy": "5-Fold GroupKFold strictly on evaluator_id",
+          "target_empathy": {
+            "dummy_baseline_mae": 1.035,
+            "dummy_baseline_rmse": 1.2257,
+            "ridge_cv_mae": 0.9296,
+            "ridge_cv_rmse": 1.1639,
+            "spearman_rank_rho": 0.3313,
+            "quadratic_weighted_kappa": 0.1885
+          },
+          "target_actionability": {
+            "dummy_baseline_mae": 0.7532,
+            "dummy_baseline_rmse": 1.0043,
+            "ridge_cv_mae": 0.7694,
+            "ridge_cv_rmse": 0.9971,
+            "spearman_rank_rho": 0.15,
+            "quadratic_weighted_kappa": -0.0016
+          }
+        }
+      }
+    },
+    "M3_TASK_PERF": {
+      "v1.0.0": {
+        "artifact_path": "m3_task_perf/v1/model.joblib",
+        "sha256": "39b2d33a6c2dc3b0acb3de924703b17c2a79b7cb764c6f0946d3ea7061c45d38",
+        "trained_at": "2026-11-21T16:43:26.462652+00:00",
+        "status": "limited_performance",
+        "metrics": {
+          "dataset_rows": 436,
+          "unique_participants": 20,
+          "validation_strategy": "5-Fold GroupKFold strictly on participant_id",
+          "cohort_characteristics": "Healthy Older Adults (MMSE 28.65 +/- 1.65; normative cognitive aging baseline)",
+          "zero_count_percentage": 77.52,
+          "error_occurrence_classifier": {
+            "dummy_baseline_balanced_accuracy": 0.5,
+            "hurdle_classifier_balanced_accuracy": 0.6406,
+            "roc_auc": 0.6838
+          },
+          "error_count_regressor": {
+            "dummy_baseline_mae_median": 0.4654,
+            "hurdle_count_mae": 0.5298,
+            "performance_note": "Trivial median-zero baseline has lower MAE (0.465) due to 77.5% zeros; Hurdle model achieves 64.06% balanced accuracy on detecting non-zero error episodes."
+          }
+        }
+      }
+    },
+    "M1_PACING": {
+      "v1.0.0": {
+        "artifact_path": "m1_pacing/v1/model.joblib",
+        "sha256": "3d45be5621c462b22228d72f072dd73bf9dd57bd349ebe823ee2afe038acc9dc",
+        "trained_at": "2026-11-21T16:43:26.508192+00:00",
+        "status": "statistical_reference",
+        "metrics": {
+          "msl_motor_tapping": {
+            "cohort": "Older Adults Motor Tapping (N=32)",
+            "sample_size": 32,
+            "distribution": "Log-Normal (floc=0)",
+            "parameters": {
+              "shape_sigma": 0.0956,
+              "scale_median_ms": 881.22,
+              "log_mu": 6.7813
+            },
+            "empirical_percentiles_ms": {
+              "p50": 902.01,
+              "p75": 923.57,
+              "p90": 988.79,
+              "p95": 994.6
+            },
+            "fitted_percentiles_ms": {
+              "p50": 881.22,
+              "p75": 939.91,
+              "p90": 996.07,
+              "p95": 1031.27
+            },
+            "goodness_of_fit": {
+              "kolmogorov_smirnov_stat": 0.1301,
+              "p_value": 0.6048,
+              "fit_acceptable": true
+            }
+          },
+          "nback_working_memory": {
+            "cohort": "Dementia Patients Working Memory (N=24)",
+            "sample_size": 24,
+            "distribution": "Log-Normal (floc=0)",
+            "parameters": {
+              "shape_sigma": 0.2708,
+              "scale_median_ms": 883.89,
+              "log_mu": 6.7843
+            },
+            "empirical_percentiles_ms": {
+              "p50": 936.5,
+              "p75": 1092.92,
+              "p90": 1238.01,
+              "p95": 1272.98
+            },
+            "fitted_percentiles_ms": {
+              "p50": 883.89,
+              "p75": 1061.03,
+              "p90": 1250.61,
+              "p95": 1379.91
+            },
+            "goodness_of_fit": {
+              "kolmogorov_smirnov_stat": 0.1592,
+              "p_value": 0.5259,
+              "fit_acceptable": true
+            }
+          },
+          "clinical_note": "Technical pacing reference percentiles only. FORBIDDEN to enforce automatic session timeout or premature task termination on patients."
+        }
+      }
+    },
+    "M4_INDEPENDENCE": {
+      "v1.0.0": {
+        "artifact_path": "m4_independence/v1/metrics.json",
+        "sha256": "N/A_DESCRIPTIVE_TABLE",
+        "trained_at": "2026-11-21T16:43:26.523570+00:00",
+        "status": "descriptive_prior",
+        "metrics": {
+          "total_records": 2074,
+          "unique_participants": 327,
+          "overall_historical_independence_rate": 0.6977,
+          "activity_specific_priors": {
+            "1": {
+              "total_runs": 260,
+              "independent_runs": 180,
+              "independence_rate": 0.6923
+            },
+            "2": {
+              "total_runs": 260,
+              "independent_runs": 208,
+              "independence_rate": 0.8
+            },
+            "3": {
+              "total_runs": 256,
+              "independent_runs": 190,
+              "independence_rate": 0.7422
+            },
+            "4": {
+              "total_runs": 303,
+              "independent_runs": 172,
+              "independence_rate": 0.5677
+            },
+            "5": {
+              "total_runs": 317,
+              "independent_runs": 294,
+              "independence_rate": 0.9274
+            },
+            "6": {
+              "total_runs": 197,
+              "independent_runs": 186,
+              "independence_rate": 0.9442
+            },
+            "7": {
+              "total_runs": 278,
+              "independent_runs": 68,
+              "independence_rate": 0.2446
+            },
+            "8": {
+              "total_runs": 203,
+              "independent_runs": 149,
+              "independence_rate": 0.734
+            }
+          },
+          "audit_finding": "Duration and pause features were stripped due to post-outcome leakage. Only activity_id was available pre-task. Machine learning modeling reduced to trivial empirical task-difficulty lookup table.",
+          "scientific_recommendation": "Retained as statistical descriptive prior. Not trained as supervised ML model."
+        }
+      }
+    }
+  }
+}

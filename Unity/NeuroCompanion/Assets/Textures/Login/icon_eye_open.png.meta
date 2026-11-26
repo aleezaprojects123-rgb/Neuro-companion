@@ -1,0 +1,9 @@
+fileFormatVersion: 2
+guid: 27db39322c9842dd83776b5f1f5de515
+TextureImporter:
+  serializedVersion: 11
+  textureType: 2
+  spriteMode: 1
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  alphaIsTransparency: 1

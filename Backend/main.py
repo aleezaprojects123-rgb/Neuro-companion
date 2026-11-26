@@ -50,6 +50,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from model.config import MODEL_VERSION
 from model.predict import _load_artefacts, is_model_loaded, predict
 from telemetry.routes import router as telemetry_router
+from telemetry.extended_routes import extended_router
+from api.routes.assistance import assistance_router
+from api.routes.auth import auth_router
 
 # ---------------------------------------------------------------------------
 # API Contract constants (P2A-30)
@@ -101,6 +104,16 @@ app = FastAPI(
 app.include_router(telemetry_router)
 # Versioned prefix (new Unity integration target)
 app.include_router(telemetry_router, prefix=API_PREFIX)
+
+# Extended routes for Phase 3/4 (patient preferences, presentations, observation opportunities,
+# assistance episodes, dynamic UI config, event interpretations, consent)
+app.include_router(extended_router)
+
+# Phase 4.8 Assistance Runtime Router (POST /api/v1/assistance/evaluate)
+app.include_router(assistance_router)
+
+# Authentication and User Profiles Router
+app.include_router(auth_router)
 
 
 # ---------------------------------------------------------------------------

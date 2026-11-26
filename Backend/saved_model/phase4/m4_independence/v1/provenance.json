@@ -1,0 +1,10 @@
+{
+  "model_id": "M4_INDEPENDENCE",
+  "version": "1.0.0",
+  "training_timestamp": "2026-11-21T16:43:26.523570+00:00",
+  "source_dataset_path": "data/processed/phase4/activity_task/casas_iadl_prepared.csv",
+  "source_dataset_sha256": "e87fa6a1c6767c5eabb7196965b257dad0e50f4b4b0c74eda63af74d5c1edfa1",
+  "algorithm": "Empirical Bayesian Base Rate Lookup",
+  "status": "descriptive_prior",
+  "clinical_governance": "Historical physical ADL domestic task prior only. Does not predict digital companion autonomy."
+}

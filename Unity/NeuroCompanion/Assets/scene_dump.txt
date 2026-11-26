@@ -1,0 +1,118 @@
+Active Scene: SampleScene (path: Assets/Scenes/SampleScene.unity)
+Root GameObjects count: 8
+Root: Main Camera (active: True)
+Root: [ENVIRONMENT] (active: True)
+  -> Lighting_Rig (active: True)
+     --> Garden_SunLight
+     --> Global Volume
+  -> OrientationRoom_Anchor (active: True)
+  -> ReminiscenceCorner_Anchor (active: True)
+  -> CognitiveGarden_Anchor (active: True)
+Root: [SYSTEMS] (active: True)
+  -> Carl_Companion_Anchor (active: True)
+  -> Audio_Ambience_Source (active: True)
+  -> Interaction_Dispatcher_Anchor (active: True)
+Root: [MANAGERS] (active: True)
+  -> Backend_Client_Holder (active: True)
+  -> Telemetry_Emitter_Holder (active: True)
+  -> Mode_Manager_Holder (active: True)
+  -> Auth_Manager_Holder (active: True)
+Root: [UI] (active: True)
+  -> Login_Background (active: True)
+  -> Login_Card_Panel (active: True)
+     --> Txt_WelcomeBack
+     --> Txt_Subtitle
+     --> Lbl_Email
+     --> Input_Email
+     --> Lbl_Password
+     --> Input_Password
+     --> Btn_ForgotPassword
+     --> Txt_StatusMessage
+     --> Loading_Indicator
+     --> Btn_SignIn
+     --> Or_Divider
+     --> Btn_CreateAccount
+     --> Btn_PatientMode
+     --> Footer
+  -> PatientMode_UI_Anchor (active: True)
+  -> CaregiverMode_UI_Anchor (active: True)
+  -> Prompt_Banner_Anchor (active: True)
+  -> Register_Modal_Panel (active: False)
+     --> Txt_Title
+     --> Input_RegName
+     --> Input_RegEmail
+     --> Input_RegPassword
+     --> Input_RegConfirmPw
+     --> Btn_SubmitRegister
+     --> Btn_BackToLogin
+     --> Txt_RegStatus
+  -> ForgotPassword_Modal_Panel (active: False)
+     --> Txt_Title
+     --> Input_ForgotEmail
+     --> Btn_SubmitForgot
+     --> Btn_ForgotBack
+     --> Txt_ForgotStatus
+  -> Dashboard_Panel (active: False)
+     --> Dashboard_Studio_BG
+     --> Nav_Header
+     --> Card_OasisAssessment
+     --> Card_Analytics
+  -> Patient_HUD (active: False)
+     --> Top_Banner
+     --> Btn_ExitToLogin
+Root: EventSystem (active: True)
+Root: Global_Volume_Garden (active: True)
+Root: [GARDEN_GAME] (active: False)
+  -> Garden_Terrain (active: True)
+  -> Garden_Boundaries (active: True)
+     --> Hedge_Perimeter
+     --> Timber_Fence_Perimeter
+  -> Outer_Earth_Landscape (active: True)
+  -> Garden_Pathway (active: True)
+     --> Garden_Pathway_Edging
+  -> Garden_Trees (active: True)
+     --> RealisticTree_1
+     --> RealisticTree_2
+     --> RealisticTree_3
+     --> RealisticTree_4
+     --> RealisticTree_5
+     --> RealisticTree_6
+     --> RealisticTree_7
+     --> RealisticTree_8
+     --> CherryTree_1
+     --> CherryTree_2
+     --> CherryTree_3
+     --> CherryTree_4
+     --> PalmTree_1
+     --> PalmTree_2
+     --> PalmTree_3
+     --> PalmTree_4
+  -> Garden_Bushes (active: True)
+     --> TallBush_1
+     --> TallBush_2
+     --> TallBush_3
+     --> TallBush_4
+     --> TallBush_5
+     --> GreenBush_1
+     --> GreenBush_2
+     --> GreenBush_3
+     --> GreenBush_4
+     --> GreenBush_5
+  -> Garden_FlowerBeds (active: True)
+     --> FlowerBed_01
+     --> FlowerBed_02
+     --> FlowerBed_03
+  -> Individual_Plants (active: True)
+     --> TreeBase_Accents
+     --> Meadow_Wildflowers
+     --> Pathway_Accents
+     --> FenceLine_Accents
+  -> Gardening_Planting_Station (active: True)
+     --> Structure_Frame
+     --> Work_Tabletop
+     --> Lower_Storage_Shelf
+     --> Upper_Hutch_Trellis
+     --> Plant_Pots
+     --> Gardening_Trowel
+     --> Watering_Can
+     --> Plant_Seedlings

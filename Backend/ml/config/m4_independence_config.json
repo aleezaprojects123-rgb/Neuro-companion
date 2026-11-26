@@ -1,0 +1,32 @@
+{
+  "model_id": "M4_INDEPENDENCE",
+  "model_name": "Independence Intelligence",
+  "version": "1.0.0",
+  "architecture_type": "domain_prior_classifier",
+  "supported_assistance_strategies": [
+    "AS10_INDEPENDENT_COMPLETION"
+  ],
+  "dataset_source": {
+    "file_path": "data/processed/phase4/activity_task/casas_iadl_prepared.csv",
+    "group_col": "participant_id",
+    "target_col": "clinical_score_target",
+    "feature_cols": [
+      "activity_id"
+    ]
+  },
+  "scientific_checks": {
+    "casas_score_ground_truth": "Verified against Washington State University clinical scoring protocol (Dawadi et al., 2013): Score 1 denotes independent task completion without human examiner intervention. Score 2 denotes in-person verbal prompt required. Scores 3 and 5 denote step omission or cognitive breakdown.",
+    "anti_leakage_feature_timing": "Post-hoc session metrics (total duration_sec, pause_to_duration_ratio, max_pause_sec) are strictly excluded from predictive features to prevent post-outcome leakage. The model operates solely on pre-task activity complexity to establish baseline autonomy priors.",
+    "domain_shift_governance": "This model provides an initial baseline prior reflecting physical domestic ADL history. It is explicitly forbidden from overriding active real-time Unity telemetry or forcing assistance during independent digital gameplay."
+  },
+  "validation_strategy": {
+    "method": "GroupKFold",
+    "n_splits": 5,
+    "group_col": "participant_id"
+  },
+  "evaluation_metrics": [
+    "balanced_accuracy",
+    "macro_f1",
+    "roc_auc"
+  ]
+}

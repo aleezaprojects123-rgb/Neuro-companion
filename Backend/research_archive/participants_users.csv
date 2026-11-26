@@ -1,0 +1,61 @@
+user_id,study_group,age_group,gender,relationship,stage,diagnosis,language,device,tech_comfort,tech_savviness,has_support,experience,occupation,queries_completed,sus_q1,sus_q2,sus_q3,sus_q4,sus_q5,sus_q6,sus_q7,sus_q8,sus_q9,sus_q10,sus_score,phase
+C001,patients_caregivers,18–39,Female,Family caregiver,,Alzheimer’s disease,en,"Smartphone, Computer",Somewhat comfortable,4,Yes,,,10,5,1,5,1,5,1,5,1,5,1,100.0,patients_caregivers
+C002,patients_caregivers,18–39,Female,Family caregiver,,Alzheimer’s disease,en,Smartphone,Very comfortable,4,Yes,,,10,3,1,5,1,5,1,4,1,5,1,92.5,patients_caregivers
+C003,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,Smartphone,Somewhat comfortable,3,Yes,,,10,1,1,4,1,3,2,4,1,5,1,77.5,patients_caregivers
+C004,patients_caregivers,18–39,Male,Family caregiver,,Prefer not to say,pt,Computer,Very comfortable,5,Yes,,,10,3,1,5,1,4,1,5,1,5,1,92.5,patients_caregivers
+C005,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,es,Computer,Very comfortable,5,Yes,,,10,5,1,5,1,5,1,5,1,5,1,100.0,patients_caregivers
+C006,patients_caregivers,18–39,Female,Family caregiver,,Not sure,en,Smartphone,Somewhat comfortable,3,Yes,,,10,4,2,5,1,4,2,4,1,4,1,85.0,patients_caregivers
+C007,patients_caregivers,50–59,Female,Family caregiver,,Vascular dementia,en,Smartphone,Somewhat comfortable,3,Yes,,,10,3,1,4,2,4,3,4,1,4,3,72.5,patients_caregivers
+C008,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,pt,"Smartphone, Computer",Somewhat comfortable,4,Yes,,,10,5,1,5,1,5,1,5,1,5,1,100.0,patients_caregivers
+C009,patients_caregivers,50–59,Male,Family caregiver,,Vascular dementia,en,Computer,Very comfortable,5,Yes,,,10,5,1,4,1,4,2,4,1,5,2,87.5,patients_caregivers
+C010,patients_caregivers,18–39,Női,Family caregiver,,Alzheimer-kór,en,Smartphone,Segítségre van szükségem,4,Igen,,,10,4,1,5,1,5,2,4,1,5,1,92.5,patients_caregivers
+C011,patients_caregivers,40–49,Female,Family caregiver,,Not sure,de,"Smartphone, Computer",Somewhat comfortable,4,Yes,,,10,2,2,4,2,3,3,4,2,4,2,65.0,patients_caregivers
+C012,patients_caregivers,60–69,Female,Family caregiver,,Vascular dementia,de,Computer,Somewhat comfortable,3,No,,,10,5,2,4,5,4,1,4,1,4,1,77.5,patients_caregivers
+C013,patients_caregivers,60–69,Male,Family caregiver,,Vascular dementia,en,Smartphone,Very comfortable,3,Yes,,,10,5,1,5,1,5,1,5,1,5,1,100.0,patients_caregivers
+C014,patients_caregivers,40–49,Male,Family caregiver,,Vascular dementia,en,Computer,Somewhat comfortable,4,Yes,,,10,3,2,3,2,4,2,2,2,3,3,60.0,patients_caregivers
+C015,patients_caregivers,40–49,Male,Family caregiver,,Prefer not to say,en,"Smartphone, Computer",Somewhat comfortable,3,Yes,,,10,4,1,5,1,4,3,5,1,4,3,82.5,patients_caregivers
+C016,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,Computer,Somewhat comfortable,4,Yes,,,10,3,1,5,1,4,2,5,1,4,2,85.0,patients_caregivers
+C017,patients_caregivers,18–39,Female,Family caregiver,,Alzheimer’s disease,en,"Smartphone, Tablet",Somewhat comfortable,4,Yes,,,10,5,1,5,1,5,1,5,1,5,1,100.0,patients_caregivers
+C018,patients_caregivers,18–39,Female,Family caregiver,,Alzheimer’s disease,en,"Smartphone, Tablet, Computer",Very comfortable,5,Yes,,,10,4,2,5,1,4,1,4,1,5,4,82.5,patients_caregivers
+C019,patients_caregivers,18–39,Female,Family caregiver,,Alzheimer’s disease,en,Smartphone,Somewhat comfortable,4,No,,,10,4,1,5,1,5,2,5,1,5,1,95.0,patients_caregivers
+C020,patients_caregivers,18–39,Female,Family caregiver,,Vascular dementia,en,Computer,Somewhat comfortable,4,Yes,,,10,4,1,5,2,4,1,5,1,5,5,82.5,patients_caregivers
+C021,patients_caregivers,18–39,Female,Family caregiver,,Alzheimer’s disease,pt,"Smartphone, Computer",Very comfortable,5,Yes,,,10,3,2,4,2,3,4,4,2,4,2,65.0,patients_caregivers
+C022,patients_caregivers,40–49,Male,Family caregiver,,Alzheimer’s disease,en,Computer,Very comfortable,4,Yes,,,10,5,1,4,1,5,1,4,1,5,3,90.0,patients_caregivers
+C023,patients_caregivers,18–39,Female,Family caregiver,,Alzheimer’s disease,en,Computer,Somewhat comfortable,4,Yes,,,10,1,1,5,1,5,1,5,1,5,1,90.0,patients_caregivers
+C024,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,"Smartphone, Computer",Somewhat comfortable,4,No,,,10,5,1,5,1,5,1,5,1,5,1,100.0,patients_caregivers
+C025,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,Computer,Somewhat comfortable,3,Yes,,,10,2,2,4,2,3,5,4,2,4,2,60.0,patients_caregivers
+C026,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,de,"Smartphone, Computer",Very comfortable,5,Yes,,,10,3,1,5,1,4,1,5,1,5,1,92.5,patients_caregivers
+C027,patients_caregivers,18–39,Masculino,Family caregiver,,,es,Computer,Muy cómodo,4,No,,,10,5,1,5,1,4,1,5,1,5,1,97.5,patients_caregivers
+C028,patients_caregivers,40–49,Female,Family caregiver,,Vascular dementia,en,"Smartphone, Computer",Very comfortable,5,Yes,,,10,3,1,5,1,3,1,5,1,4,1,87.5,patients_caregivers
+C029,patients_caregivers,18–39,Männlich,Family caregiver,,Alzheimer-Krankheit,de,"Smartphone, Computer",Sehr komfortabel,4,Ja,,,10,5,1,5,1,5,1,5,1,5,1,100.0,patients_caregivers
+C030,patients_caregivers,40–49,Male,Family caregiver,,Lewy body dementia,es,Computer,Very comfortable,5,Yes,,,10,3,1,5,4,3,1,5,1,2,1,75.0,patients_caregivers
+C031,patients_caregivers,50–59,Female,Family caregiver,,Vascular dementia,en,"Smartphone, Computer",Somewhat comfortable,4,Yes,,,10,3,1,5,1,4,1,5,1,5,1,92.5,patients_caregivers
+C032,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,Computer,Somewhat comfortable,4,Yes,,,10,4,2,5,1,4,2,4,2,5,1,85.0,patients_caregivers
+C033,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,"Smartphone, Computer",Very comfortable,4,Yes,,,10,4,2,5,2,4,1,5,1,5,2,87.5,patients_caregivers
+C034,patients_caregivers,18–39,Male,Family caregiver,,Vascular dementia,es,Computer,Very comfortable,5,Yes,,,10,5,1,5,1,5,1,5,1,5,1,100.0,patients_caregivers
+C035,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,"Smartphone, Computer",Very comfortable,3,Yes,,,11,5,1,5,1,5,1,5,1,5,1,100.0,patients_caregivers
+C036,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,de,"Smartphone, Computer",Very comfortable,1,Yes,,,10,4,2,4,1,3,3,4,2,4,1,75.0,patients_caregivers
+C037,patients_caregivers,18–39,Female,Family caregiver,,Not sure,en,Computer,Need assistance,3,Yes,,,10,4,1,5,2,5,1,5,2,5,1,92.5,patients_caregivers
+C038,patients_caregivers,60–69,Female,Family caregiver,,Alzheimer’s disease,en,Computer,Somewhat comfortable,3,Yes,,,10,4,2,5,1,4,1,4,1,5,1,90.0,patients_caregivers
+C039,patients_caregivers,18–39,Male,Family caregiver,,Prefer not to say,en,"Smartphone, Computer",Very comfortable,4,Yes,,,10,4,1,5,4,5,1,5,1,5,1,90.0,patients_caregivers
+C040,patients_caregivers,40–49,Female,Family caregiver,,Alzheimer’s disease,en,Smartphone,Very comfortable,5,Yes,,,10,3,1,5,1,4,1,4,1,5,1,90.0,patients_caregivers
+C041,patients_caregivers,50–59,Female,Family caregiver,,Alzheimer’s disease,en,Computer,Very comfortable,4,Yes,,,10,4,1,5,1,5,1,4,1,5,1,95.0,patients_caregivers
+C042,patients_caregivers,60–69,Female,Family caregiver,,Vascular dementia,en,Smartphone,Somewhat comfortable,4,No,,,10,2,1,5,1,5,1,5,1,5,1,92.5,patients_caregivers
+C043,patients_caregivers,18–39,Male,Family caregiver,,Lewy body dementia,en,"Smartphone, Tablet, Computer",Very comfortable,5,Yes,,,10,4,1,5,1,5,1,5,1,5,1,97.5,patients_caregivers
+C044,patients_caregivers,50–59,Male,Family caregiver,,Vascular dementia,es,"Smartphone, Computer",Very comfortable,4,Yes,,,10,4,1,5,1,5,1,5,1,5,1,97.5,patients_caregivers
+C045,patients_caregivers,40–49,Female,Family caregiver,,Lewy body dementia,en,Smartphone,Somewhat comfortable,4,No,,,10,3,1,5,1,5,1,5,1,5,1,95.0,patients_caregivers
+C046,patients_caregivers,18–39,Non-binary,Family caregiver,,Alzheimer’s disease,en,Computer,Somewhat comfortable,4,Yes,,,10,4,1,5,1,4,2,4,1,4,1,87.5,patients_caregivers
+C047,patients_caregivers,50–59,Male,Family caregiver,,Vascular dementia,en,"Smartphone, Tablet, Computer",Somewhat comfortable,3,Yes,,,10,4,1,5,4,4,2,4,1,5,2,80.0,patients_caregivers
+C048,patients_caregivers,40–49,Male,Family caregiver,,Vascular dementia,en,Computer,Very comfortable,5,Yes,,,10,1,1,5,1,1,3,5,1,5,1,75.0,patients_caregivers
+C049,patients_caregivers,50–59,Male,Family caregiver,,Other,en,"Smartphone, Computer",Very comfortable,5,Yes,,,10,2,1,4,1,1,5,3,1,4,1,62.5,patients_caregivers
+C050,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,es,"Smartphone, Computer",Very comfortable,5,Yes,,,10,4,1,5,1,4,1,5,1,5,1,95.0,patients_caregivers
+C051,patients_caregivers,40–49,Male,Family caregiver,,Alzheimer’s disease,en,"Smartphone, Computer",Somewhat comfortable,4,No,,,10,2,2,4,3,2,4,3,2,4,2,55.0,patients_caregivers
+C052,patients_caregivers,18–39,Male,Family caregiver,,Vascular dementia,es,Smartphone,Somewhat comfortable,3,Yes,,,10,4,1,3,1,5,2,4,2,5,2,82.5,patients_caregivers
+C053,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,Computer,Very comfortable,5,Yes,,,10,4,2,5,1,4,2,4,1,5,2,85.0,patients_caregivers
+C054,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,"Smartphone, Computer",Somewhat comfortable,4,Yes,,,10,4,2,4,2,3,4,3,2,4,2,65.0,patients_caregivers
+C055,patients_caregivers,40–49,Female,Family caregiver,,Alzheimer’s disease,en,Smartphone,Very comfortable,2,Yes,,,10,3,1,4,1,4,1,4,1,5,1,87.5,patients_caregivers
+C056,patients_caregivers,18–39,Female,Family caregiver,,Alzheimer’s disease,en,Computer,Somewhat comfortable,5,Yes,,,10,2,1,4,1,3,2,4,1,5,2,77.5,patients_caregivers
+C057,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,"Smartphone, Computer",Very comfortable,5,Yes,,,10,4,1,5,1,4,1,5,1,4,1,92.5,patients_caregivers
+C058,patients_caregivers,18–39,Female,Family caregiver,,Alzheimer’s disease,pt,"Smartphone, Computer",Very comfortable,4,Yes,,,10,3,1,5,2,3,1,3,2,3,3,70.0,patients_caregivers
+C059,patients_caregivers,18–39,Male,Family caregiver,,Alzheimer’s disease,en,Computer,Very comfortable,5,No,,,10,2,2,4,1,3,1,4,1,3,3,70.0,patients_caregivers
+C060,patients_caregivers,18–39,Female,Family caregiver,,Alzheimer’s disease,en,"Smartphone, Tablet, Computer",Very comfortable,5,Yes,,,10,4,2,4,2,4,3,4,2,4,2,72.5,patients_caregivers

@@ -1,0 +1,12 @@
+{
+  "model_id": "M6_DIALOGUE",
+  "version": "1.0.0",
+  "training_timestamp": "2026-11-21T16:43:26.088408+00:00",
+  "source_dataset_path": "data/processed/phase4/conversational_text/ai4hope_dialogue_prepared.csv",
+  "source_dataset_sha256": "eeef1c1bb00ce5c05dc38b239f8112797d2a6a42b18bfef305cffc6a7735e288",
+  "model_artifact_sha256": "b651e2dfc6457e58b17a6720542b52a507ffbe6f6088846ee101e00d0b8427f4",
+  "algorithm": "RidgeCV with TF-IDF word/char n-grams",
+  "evaluation_strategy": "5-Fold GroupKFold on evaluator_id",
+  "clinical_governance": "Auxiliary dialogue text quality scorer. Does NOT predict patient assistance needs.",
+  "status": "active"
+}

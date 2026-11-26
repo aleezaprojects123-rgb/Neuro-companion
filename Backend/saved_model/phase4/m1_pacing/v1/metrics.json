@@ -1,0 +1,57 @@
+{
+  "msl_motor_tapping": {
+    "cohort": "Older Adults Motor Tapping (N=32)",
+    "sample_size": 32,
+    "distribution": "Log-Normal (floc=0)",
+    "parameters": {
+      "shape_sigma": 0.0956,
+      "scale_median_ms": 881.22,
+      "log_mu": 6.7813
+    },
+    "empirical_percentiles_ms": {
+      "p50": 902.01,
+      "p75": 923.57,
+      "p90": 988.79,
+      "p95": 994.6
+    },
+    "fitted_percentiles_ms": {
+      "p50": 881.22,
+      "p75": 939.91,
+      "p90": 996.07,
+      "p95": 1031.27
+    },
+    "goodness_of_fit": {
+      "kolmogorov_smirnov_stat": 0.1301,
+      "p_value": 0.6048,
+      "fit_acceptable": true
+    }
+  },
+  "nback_working_memory": {
+    "cohort": "Dementia Patients Working Memory (N=24)",
+    "sample_size": 24,
+    "distribution": "Log-Normal (floc=0)",
+    "parameters": {
+      "shape_sigma": 0.2708,
+      "scale_median_ms": 883.89,
+      "log_mu": 6.7843
+    },
+    "empirical_percentiles_ms": {
+      "p50": 936.5,
+      "p75": 1092.92,
+      "p90": 1238.01,
+      "p95": 1272.98
+    },
+    "fitted_percentiles_ms": {
+      "p50": 883.89,
+      "p75": 1061.03,
+      "p90": 1250.61,
+      "p95": 1379.91
+    },
+    "goodness_of_fit": {
+      "kolmogorov_smirnov_stat": 0.1592,
+      "p_value": 0.5259,
+      "fit_acceptable": true
+    }
+  },
+  "clinical_note": "Technical pacing reference percentiles only. FORBIDDEN to enforce automatic session timeout or premature task termination on patients."
+}

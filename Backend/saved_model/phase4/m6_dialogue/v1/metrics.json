@@ -1,0 +1,21 @@
+{
+  "dataset_rows": 600,
+  "unique_evaluators": 60,
+  "validation_strategy": "5-Fold GroupKFold strictly on evaluator_id",
+  "target_empathy": {
+    "dummy_baseline_mae": 1.035,
+    "dummy_baseline_rmse": 1.2257,
+    "ridge_cv_mae": 0.9296,
+    "ridge_cv_rmse": 1.1639,
+    "spearman_rank_rho": 0.3313,
+    "quadratic_weighted_kappa": 0.1885
+  },
+  "target_actionability": {
+    "dummy_baseline_mae": 0.7532,
+    "dummy_baseline_rmse": 1.0043,
+    "ridge_cv_mae": 0.7694,
+    "ridge_cv_rmse": 0.9971,
+    "spearman_rank_rho": 0.15,
+    "quadratic_weighted_kappa": -0.0016
+  }
+}

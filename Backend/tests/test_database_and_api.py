@@ -182,6 +182,8 @@ class TestDatabaseAndTelemetryAPI(unittest.TestCase):
     def test_api_routes_integration(self):
         """Test API endpoints via asynchronous router invocations."""
         import asyncio
+        import telemetry.routes as routes_mod
+        import telemetry.database as db_mod
         from telemetry.routes import (
             ingest_telemetry_events,
             create_support_profile,
@@ -189,7 +191,11 @@ class TestDatabaseAndTelemetryAPI(unittest.TestCase):
             get_support_recommendations,
             apply_caregiver_override,
         )
-        from telemetry.database import db as global_db
+
+        orig_routes_db = routes_mod.db
+        orig_db_mod_db = db_mod.db
+        routes_mod.db = self.db
+        db_mod.db = self.db
 
         async def run_api_tests():
             # 1. Onboarding without MMSE
@@ -229,7 +235,11 @@ class TestDatabaseAndTelemetryAPI(unittest.TestCase):
             ovr_resp = await apply_caregiver_override(ovr)
             self.assertEqual(ovr_resp.active_tier, SupportTier.GUIDED)
 
-        asyncio.run(run_api_tests())
+        try:
+            asyncio.run(run_api_tests())
+        finally:
+            routes_mod.db = orig_routes_db
+            db_mod.db = orig_db_mod_db
 
 
 if __name__ == "__main__":

@@ -1,0 +1,30 @@
+{
+  "model_id": "M6_DIALOGUE",
+  "model_name": "Dialogue Quality Intelligence",
+  "version": "1.0.0",
+  "architecture_type": "tfidf_ridgecv_regression",
+  "supported_assistance_strategies": [
+    "AS09_VERBAL_EXPLANATION"
+  ],
+  "input_features": [
+    "answer_text"
+  ],
+  "predicted_targets": [
+    "target_empathy",
+    "target_actionability"
+  ],
+  "target_range": [
+    1.0,
+    5.0
+  ],
+  "leakage_grouping_variable": "evaluator_id",
+  "vectorizer_config": {
+    "max_features": 1000,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "min_df": 2,
+    "sublinear_tf": true
+  }
+}

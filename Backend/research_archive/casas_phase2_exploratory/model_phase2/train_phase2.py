@@ -29,7 +29,7 @@ from sklearn.metrics import (
 )
 
 # Paths
-BASE_DIR = r"C:\Users\Admin\OneDrive\Desktop\NeuroCompanion\Backend"
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 DATA_PATH = os.path.join(BASE_DIR, "data", "raw", "casas", "extracted", "task_audit_data.csv")
 SAVED_MODEL_DIR = os.path.join(BASE_DIR, "saved_model_phase2")
 REPORTS_DIR = os.path.join(BASE_DIR, "reports_phase2")

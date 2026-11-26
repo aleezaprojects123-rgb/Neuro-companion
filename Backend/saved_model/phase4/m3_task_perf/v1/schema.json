@@ -1,0 +1,23 @@
+{
+  "model_id": "M3_TASK_PERF",
+  "model_name": "Task Performance Intelligence",
+  "version": "1.0.0",
+  "architecture_type": "hurdle_count_model",
+  "supported_assistance_strategies": [
+    "AS01_REPEAT_INSTRUCTION",
+    "AS03_STEP_BY_STEP",
+    "AS04_VISUAL_HINT"
+  ],
+  "input_features": [
+    "game_type",
+    "game_reaction_time_ms"
+  ],
+  "prohibited_features_excluded": [
+    "game_time_sec",
+    "total_points",
+    "touch_interaction_flag",
+    "vocal_interaction_flag"
+  ],
+  "target": "errors_count",
+  "leakage_grouping_variable": "participant_id"
+}

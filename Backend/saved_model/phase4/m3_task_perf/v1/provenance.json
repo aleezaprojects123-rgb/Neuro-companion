@@ -1,0 +1,12 @@
+{
+  "model_id": "M3_TASK_PERF",
+  "version": "1.0.0",
+  "training_timestamp": "2026-11-21T16:43:26.462652+00:00",
+  "source_dataset_path": "data/processed/phase4/activity_task/robot_games_prepared.csv",
+  "source_dataset_sha256": "1ca41840e04242d30c5145f231f0805b82ce4a0243f366e4b33eb81c042eb600",
+  "model_artifact_sha256": "39b2d33a6c2dc3b0acb3de924703b17c2a79b7cb764c6f0946d3ea7061c45d38",
+  "algorithm": "Hurdle Two-Stage (Logistic Regression + Poisson Count)",
+  "evaluation_strategy": "5-Fold GroupKFold on participant_id",
+  "status": "limited_performance",
+  "clinical_governance": "Normative healthy older adult cognitive training baseline. Limited predictive utility for dementia clinical assistance without real-time in-game telemetry."
+}

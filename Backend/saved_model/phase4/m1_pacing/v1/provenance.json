@@ -1,0 +1,10 @@
+{
+  "model_id": "M1_PACING",
+  "version": "1.0.0",
+  "training_timestamp": "2026-11-21T16:43:26.508192+00:00",
+  "source_dataset_path": "data/processed/phase4/latency_pacing/msl_tapping_prepared.csv and nback_latency_prepared.csv",
+  "model_artifact_sha256": "3d45be5621c462b22228d72f072dd73bf9dd57bd349ebe823ee2afe038acc9dc",
+  "algorithm": "2-Parameter Log-Normal Density Estimation (floc=0)",
+  "status": "statistical_reference",
+  "clinical_governance": "Technical pacing reference percentiles. Non-intrusive latency guidance."
+}

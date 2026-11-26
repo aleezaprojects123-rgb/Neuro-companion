@@ -10,9 +10,12 @@ Tables:
 - caregiver_overrides: Explicit caregiver decisions superseding automated suggestions
 """
 
+import hashlib
 import json
 import os
+import secrets
 import sqlite3
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -42,6 +45,22 @@ DEFAULT_DB_PATH = os.path.join(
 
 def _utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def hash_password(password: str, salt: Optional[str] = None) -> Tuple[str, str]:
+    """Generates a secure PBKDF2-HMAC-SHA256 password hash with 100,000 iterations and random salt."""
+    if not salt:
+        salt = secrets.token_hex(16)
+    pw_hash = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000
+    ).hex()
+    return pw_hash, salt
+
+
+def verify_password(password: str, stored_hash: str, salt: str) -> bool:
+    """Verifies a password against the stored PBKDF2 hash in constant time."""
+    pw_hash, _ = hash_password(password, salt)
+    return secrets.compare_digest(pw_hash, stored_hash)
 
 
 class Database:
@@ -236,6 +255,53 @@ class Database:
             conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_overrides_patient
             ON caregiver_overrides(patient_id, timestamp_utc);
+            """)
+
+            # 6. User Accounts
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id TEXT PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                full_name TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                salt TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'caregiver',
+                profile_picture_url TEXT,
+                patient_association TEXT,
+                accessibility_preferences_json TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT NOT NULL,
+                last_login TEXT
+            );
+            """)
+            conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_users_email
+            ON users(email);
+            """)
+
+            # 7. Authentication Tokens (Session Management)
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS auth_tokens (
+                token TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            );
+            """)
+            conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_auth_tokens_user
+            ON auth_tokens(user_id);
+            """)
+
+            # 8. Password Reset Records
+            conn.execute("""
+            CREATE TABLE IF NOT EXISTS password_resets (
+                reset_id TEXT PRIMARY KEY,
+                email TEXT NOT NULL,
+                reset_token TEXT NOT NULL,
+                requested_at TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'requested'
+            );
             """)
 
             # Run backward-compatible schema migrations on existing database tables
@@ -551,6 +617,238 @@ class Database:
                     caregiver_note=r["caregiver_note"]
                 ))
         return overrides
+
+    # -----------------------------------------------------------------
+    # User Account & Authentication Operations
+    # -----------------------------------------------------------------
+
+    def create_user(
+        self,
+        email: str,
+        full_name: str,
+        password: str,
+        role: str = "caregiver",
+        profile_picture_url: Optional[str] = None,
+        patient_association: Optional[str] = None,
+        accessibility_preferences: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Creates a new user account with secure PBKDF2 hashed password."""
+        email_clean = email.strip().lower()
+        with self.get_connection() as conn:
+            existing = conn.execute(
+                "SELECT user_id FROM users WHERE email = ?", (email_clean,)
+            ).fetchone()
+            if existing:
+                raise ValueError(f"Email '{email_clean}' is already registered.")
+
+            user_id = f"usr_{uuid.uuid4().hex[:12]}"
+            pw_hash, salt = hash_password(password)
+            now = datetime.now(timezone.utc).isoformat()
+            prefs_json = json.dumps(accessibility_preferences or {})
+
+            conn.execute(
+                """
+                INSERT INTO users (
+                    user_id, email, full_name, password_hash, salt, role,
+                    profile_picture_url, patient_association,
+                    accessibility_preferences_json, created_at, last_login
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    user_id,
+                    email_clean,
+                    full_name.strip(),
+                    pw_hash,
+                    salt,
+                    role.lower(),
+                    profile_picture_url,
+                    patient_association,
+                    prefs_json,
+                    now,
+                    None,
+                ),
+            )
+            return {
+                "user_id": user_id,
+                "email": email_clean,
+                "full_name": full_name.strip(),
+                "role": role.lower(),
+                "profile_picture_url": profile_picture_url,
+                "patient_association": patient_association,
+                "accessibility_preferences": accessibility_preferences or {},
+                "created_at": now,
+                "last_login": None,
+            }
+
+    def authenticate_user(
+        self, email: str, password: str
+    ) -> Optional[Dict[str, Any]]:
+        """Verifies email and password. Updates last_login and returns user profile dict or None."""
+        email_clean = email.strip().lower()
+        with self.get_connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM users WHERE email = ?", (email_clean,)
+            ).fetchone()
+            if not row:
+                return None
+
+            if not verify_password(password, row["password_hash"], row["salt"]):
+                return None
+
+            now = datetime.now(timezone.utc).isoformat()
+            conn.execute(
+                "UPDATE users SET last_login = ? WHERE user_id = ?",
+                (now, row["user_id"]),
+            )
+
+            return {
+                "user_id": row["user_id"],
+                "email": row["email"],
+                "full_name": row["full_name"],
+                "role": row["role"],
+                "profile_picture_url": row["profile_picture_url"],
+                "patient_association": row["patient_association"],
+                "accessibility_preferences": json.loads(
+                    row["accessibility_preferences_json"] or "{}"
+                ),
+                "created_at": row["created_at"],
+                "last_login": now,
+            }
+
+    def create_session_token(self, user_id: str, days_valid: int = 7) -> str:
+        """Generates a cryptographically secure session token."""
+        token = secrets.token_urlsafe(32)
+        now = datetime.now(timezone.utc)
+        expires_at = now.timestamp() + (days_valid * 86400)
+        expires_iso = datetime.fromtimestamp(expires_at, tz=timezone.utc).isoformat()
+
+        with self.get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO auth_tokens (token, user_id, created_at, expires_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (token, user_id, now.isoformat(), expires_iso),
+            )
+        return token
+
+    def get_user_by_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """Retrieves active user profile by valid session token."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self.get_connection() as conn:
+            row = conn.execute(
+                """
+                SELECT u.* FROM users u
+                JOIN auth_tokens t ON u.user_id = t.user_id
+                WHERE t.token = ? AND t.expires_at > ?
+                """,
+                (token, now_iso),
+            ).fetchone()
+            if not row:
+                return None
+
+            return {
+                "user_id": row["user_id"],
+                "email": row["email"],
+                "full_name": row["full_name"],
+                "role": row["role"],
+                "profile_picture_url": row["profile_picture_url"],
+                "patient_association": row["patient_association"],
+                "accessibility_preferences": json.loads(
+                    row["accessibility_preferences_json"] or "{}"
+                ),
+                "created_at": row["created_at"],
+                "last_login": row["last_login"],
+            }
+
+    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieves user profile by user_id."""
+        with self.get_connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM users WHERE user_id = ?", (user_id,)
+            ).fetchone()
+            if not row:
+                return None
+            return {
+                "user_id": row["user_id"],
+                "email": row["email"],
+                "full_name": row["full_name"],
+                "role": row["role"],
+                "profile_picture_url": row["profile_picture_url"],
+                "patient_association": row["patient_association"],
+                "accessibility_preferences": json.loads(
+                    row["accessibility_preferences_json"] or "{}"
+                ),
+                "created_at": row["created_at"],
+                "last_login": row["last_login"],
+            }
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Retrieves user profile by email."""
+        email_clean = email.strip().lower()
+        with self.get_connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM users WHERE email = ?", (email_clean,)
+            ).fetchone()
+            if not row:
+                return None
+            return {
+                "user_id": row["user_id"],
+                "email": row["email"],
+                "full_name": row["full_name"],
+                "role": row["role"],
+                "profile_picture_url": row["profile_picture_url"],
+                "patient_association": row["patient_association"],
+                "accessibility_preferences": json.loads(
+                    row["accessibility_preferences_json"] or "{}"
+                ),
+                "created_at": row["created_at"],
+                "last_login": row["last_login"],
+            }
+
+    def update_user_profile(
+        self,
+        user_id: str,
+        full_name: Optional[str] = None,
+        profile_picture_url: Optional[str] = None,
+        patient_association: Optional[str] = None,
+        accessibility_preferences: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Updates user profile information."""
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return None
+
+        new_name = full_name.strip() if full_name else user["full_name"]
+        new_pic = profile_picture_url if profile_picture_url is not None else user["profile_picture_url"]
+        new_assoc = patient_association if patient_association is not None else user["patient_association"]
+        new_prefs = accessibility_preferences if accessibility_preferences is not None else user["accessibility_preferences"]
+
+        with self.get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE users
+                SET full_name = ?, profile_picture_url = ?, patient_association = ?, accessibility_preferences_json = ?
+                WHERE user_id = ?
+                """,
+                (new_name, new_pic, new_assoc, json.dumps(new_prefs), user_id),
+            )
+        return self.get_user_by_id(user_id)
+
+    def record_password_reset(self, email: str) -> str:
+        """Records a password reset request without sending an unconfigured email."""
+        reset_id = f"rst_{uuid.uuid4().hex[:12]}"
+        reset_token = secrets.token_urlsafe(16)
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self.get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO password_resets (reset_id, email, reset_token, requested_at, status)
+                VALUES (?, ?, ?, ?, 'requested')
+                """,
+                (reset_id, email.strip().lower(), reset_token, now_iso),
+            )
+        return reset_token
 
 
 # Global database instance

@@ -1,0 +1,13 @@
+{
+  "model_id": "M4_INDEPENDENCE",
+  "model_name": "Historical ADL Independence Prior",
+  "version": "1.0.0",
+  "architecture_type": "descriptive_empirical_prior_table",
+  "supported_assistance_strategies": [
+    "AS10_INDEPENDENT_COMPLETION"
+  ],
+  "input_features": [
+    "activity_id"
+  ],
+  "output": "p_historical_independence"
+}
