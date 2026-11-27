@@ -117,11 +117,11 @@ namespace NeuroCompanion.Backend.Editor
             var micBadgeGo = new GameObject("Voice_Status_Badge");
             micBadgeGo.transform.SetParent(parentPanel, false);
             var micBadgeRt = micBadgeGo.AddComponent<RectTransform>();
-            micBadgeRt.anchorMin = new Vector2(1f, 1f);
-            micBadgeRt.anchorMax = new Vector2(1f, 1f);
-            micBadgeRt.pivot = new Vector2(1f, 1f);
-            micBadgeRt.anchoredPosition = new Vector2(-180f, -20f);
-            micBadgeRt.sizeDelta = new Vector2(280f, 34f);
+            micBadgeRt.anchorMin = new Vector2(0.5f, 1f);
+            micBadgeRt.anchorMax = new Vector2(0.5f, 1f);
+            micBadgeRt.pivot = new Vector2(0.5f, 1f);
+            micBadgeRt.anchoredPosition = new Vector2(0f, -75f);
+            micBadgeRt.sizeDelta = new Vector2(460f, 38f);
 
             var micBadgeBg = micBadgeGo.AddComponent<Image>();
             micBadgeBg.color = new Color(0.06f, 0.10f, 0.14f, 0.75f);

@@ -1,14 +1,13 @@
 // ============================================================
 // CarlVoiceListener.cs — Unity 6.3 LTS
-// NeuroCompanion — Hands-Free Voice Activity Detection (VAD) + Backend STT
+// NeuroCompanion — Robust Hands-Free Voice Activity Detection (VAD) + Backend STT
 //
-// 1. Continuous Microphone Voice Activity Detection (VAD) with RMS volume threshold.
-// 2. Automatically starts recording when you speak, stops after 0.9s pause.
-// 3. Encodes spoken audio into 16-bit PCM WAV and POSTs to /api/v1/carl/voice-stt.
+// 1. Automatically queries hardware sample rate (e.g. 48000Hz on Realtek Laptop Audio).
+// 2. Sensitive voice detection threshold (0.008f) with live visual volume meter.
+// 3. Automatically records speech when you talk and sends to /api/v1/carl/voice-stt.
 // 4. Understands ANY open-ended English sentence without fixed keyword restrictions.
 // 5. Keeps Unity audio alive in background (Application.runInBackground = true).
-// 6. Live VU volume meter on the HUD showing exact mic level in real-time.
-// 7. Spacebar / T key instant fallback available anytime for keyboard testing.
+// 6. Spacebar / T key instant fallback available anytime for keyboard testing.
 // ============================================================
 
 using System;
@@ -18,10 +17,6 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using TMPro;
-
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-using UnityEngine.Windows.Speech;
-#endif
 
 namespace NeuroCompanion.Carl
 {
@@ -38,21 +33,21 @@ namespace NeuroCompanion.Carl
         public TMP_Text micStatusText;
 
         [Header("Voice Activity Detection (VAD)")]
-        [Tooltip("RMS volume threshold to trigger speech detection (0.015 - 0.04 is typical for laptop mics)")]
-        public float voiceThreshold = 0.022f;
+        [Tooltip("RMS volume threshold to trigger speech detection (0.006 - 0.015 for laptop mics)")]
+        public float voiceThreshold = 0.008f;
 
         [Tooltip("Seconds of silence required to consider speech finished")]
-        public float silenceDuration = 0.95f;
+        public float silenceDuration = 0.85f;
 
         [Tooltip("Minimum speech length in seconds to filter out brief clicks or coughs")]
-        public float minSpeechLength = 0.45f;
+        public float minSpeechLength = 0.40f;
 
         [Tooltip("Maximum allowed utterance length in seconds")]
         public float maxSpeechLength = 8.0f;
 
         [Header("Microphone Settings")]
         public bool startListeningOnAwake = true;
-        public int sampleRate = 16000;
+        public int sampleRate = 48000;
         public int circularBufferLengthSec = 10;
 
         // VAD Internal State
@@ -69,10 +64,6 @@ namespace NeuroCompanion.Carl
         private float _silenceTimer = 0f;
         private float _speechDurationTimer = 0f;
         private float _carlSpeechCooldownTimer = 0f;
-
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-        private KeywordRecognizer _backupKeywordRecognizer;
-#endif
 
         [Serializable]
         public class STTResponseData
@@ -101,10 +92,13 @@ namespace NeuroCompanion.Carl
                     dialogueController = FindFirstObjectByType<CarlDialogueController>();
             }
 
-            StartContinuousMicrophone();
+            if (startListeningOnAwake)
+            {
+                StartContinuousMicrophone();
+            }
         }
 
-        private void StartContinuousMicrophone()
+        public void StartContinuousMicrophone()
         {
             if (Microphone.devices.Length == 0)
             {
@@ -114,12 +108,28 @@ namespace NeuroCompanion.Carl
             }
 
             _activeMicDevice = Microphone.devices[0];
+
+            // Auto-detect hardware supported sample rate (Realtek mic requires 48000Hz)
+            int minFreq, maxFreq;
+            Microphone.GetDeviceCaps(_activeMicDevice, out minFreq, out maxFreq);
+            if (maxFreq > 0)
+                sampleRate = maxFreq;
+            else if (minFreq > 0)
+                sampleRate = minFreq;
+            else
+                sampleRate = 48000;
+
             _totalBufferSamples = sampleRate * circularBufferLengthSec;
 
             try
             {
+                if (Microphone.IsRecording(_activeMicDevice))
+                {
+                    Microphone.End(_activeMicDevice);
+                }
+
                 _micClip = Microphone.Start(_activeMicDevice, true, circularBufferLengthSec, sampleRate);
-                Debug.Log($"[CarlVoiceListener] Continuous mic started on '{_activeMicDevice}' ({sampleRate}Hz, {circularBufferLengthSec}s buffer)");
+                Debug.Log($"[CarlVoiceListener] Microphone successfully started: '{_activeMicDevice}' at {sampleRate}Hz (Caps: {minFreq}-{maxFreq}Hz)");
                 SetUIStatus("🎙️ Mic Ready: Speak to Carl anytime (or press Space)", new Color(0.3f, 0.9f, 0.55f));
             }
             catch (Exception ex)
@@ -151,7 +161,14 @@ namespace NeuroCompanion.Carl
             }
 
             if (_micClip == null || string.IsNullOrEmpty(_activeMicDevice) || !Microphone.IsRecording(_activeMicDevice))
+            {
+                // Auto-recover microphone if it stopped
+                if (Time.frameCount % 120 == 0 && Microphone.devices.Length > 0)
+                {
+                    StartContinuousMicrophone();
+                }
                 return;
+            }
 
             // 1. Calculate live RMS volume from microphone write head
             int currentWritePos = Microphone.GetPosition(_activeMicDevice);
@@ -230,14 +247,15 @@ namespace NeuroCompanion.Carl
                 sum += _rmsSampleBuffer[i] * _rmsSampleBuffer[i];
             }
             float rms = Mathf.Sqrt(sum / _rmsSampleBuffer.Length);
-            _currentRmsVolume = Mathf.Lerp(_currentRmsVolume, rms, Time.deltaTime * 18f);
+            _currentRmsVolume = Mathf.Lerp(_currentRmsVolume, rms, Time.deltaTime * 20f);
         }
 
         private void UpdateLiveVuMeter(bool isSpeaking)
         {
             if (micStatusText == null) return;
 
-            int bars = Mathf.Clamp(Mathf.RoundToInt((_currentRmsVolume / (voiceThreshold * 2.2f)) * 5f), 0, 5);
+            // Sensitivity scale based on voiceThreshold
+            int bars = Mathf.Clamp(Mathf.RoundToInt((_currentRmsVolume / Mathf.Max(voiceThreshold, 0.001f)) * 3f), 0, 5);
             string meter = "";
             for (int b = 0; b < 5; b++)
             {
@@ -246,7 +264,7 @@ namespace NeuroCompanion.Carl
 
             if (isSpeaking)
             {
-                micStatusText.text = $"🎙️ Hearing: {meter} (Listening...)";
+                micStatusText.text = $"🎙️ Hearing: {meter} (Speaking...)";
                 micStatusText.color = new Color(0.96f, 0.72f, 0.24f);
             }
             else
@@ -287,7 +305,7 @@ namespace NeuroCompanion.Carl
                 return;
             }
 
-            Debug.Log($"[CarlVoiceListener] Spoken utterance detected: {durationSeconds:F2}s ({totalSamplesRecorded} samples). Encoding WAV...");
+            Debug.Log($"[CarlVoiceListener] Spoken utterance detected: {durationSeconds:F2}s ({totalSamplesRecorded} samples at {sampleRate}Hz). Encoding WAV...");
 
             float[] speechSamples = new float[totalSamplesRecorded];
             if (endSample >= startSample)
@@ -310,7 +328,7 @@ namespace NeuroCompanion.Carl
                 }
             }
 
-            // Convert to 16-bit PCM WAV
+            // Convert to 16-bit PCM WAV at the native hardware sample rate
             byte[] wavBytes = WavUtility.FromAudioSamples(speechSamples, 1, sampleRate);
 
             StartCoroutine(SendWavAudioToSTT(wavBytes, durationSeconds));
@@ -344,7 +362,7 @@ namespace NeuroCompanion.Carl
                             dialogueController.DeliverCarlReply(sttData.reply, sttData.action);
                         }
 
-                        // Pause VAD while Carl is speaking (+ 1.5s margin)
+                        // Pause VAD while Carl is speaking (+ margin)
                         _state = VADState.CarlSpeaking;
                         _carlSpeechCooldownTimer = Mathf.Clamp(sttData.reply.Length * 0.08f, 5.0f, 10.0f);
                         yield break;
