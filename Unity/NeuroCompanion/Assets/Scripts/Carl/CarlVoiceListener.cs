@@ -1,17 +1,21 @@
 // ============================================================
 // CarlVoiceListener.cs — Unity 6.3 LTS
-// NeuroCompanion — Robust Hands-Free Voice Listener with Live VU Meter
+// NeuroCompanion — Hands-Free Voice Activity Detection (VAD) + Backend STT
 //
-// 1. Sets Application.runInBackground = true so microphone never pauses.
-// 2. Real-time audio VU volume meter on the HUD showing exact mic sound levels.
-// 3. Expanded natural keyword triggers ("Carl", "Hi Carl", "How are you", etc.).
-// 4. One-key Spacebar / T-key fallback so testing is 100% effortless.
+// 1. Continuous Microphone Voice Activity Detection (VAD) with RMS volume threshold.
+// 2. Automatically starts recording when you speak, stops after 0.9s pause.
+// 3. Encodes spoken audio into 16-bit PCM WAV and POSTs to /api/v1/carl/voice-stt.
+// 4. Understands ANY open-ended English sentence without fixed keyword restrictions.
+// 5. Keeps Unity audio alive in background (Application.runInBackground = true).
+// 6. Live VU volume meter on the HUD showing exact mic level in real-time.
+// 7. Spacebar / T key instant fallback available anytime for keyboard testing.
 // ============================================================
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 using TMPro;
 
@@ -26,58 +30,63 @@ namespace NeuroCompanion.Carl
         [Header("Target Dialogue Controller")]
         public CarlDialogueController dialogueController;
 
+        [Header("Backend STT Configuration")]
+        public string voiceSttEndpoint = "http://127.0.0.1:8000/api/v1/carl/voice-stt";
+
         [Header("UI Voice Status Indicator")]
         public GameObject micIndicatorPanel;
         public TMP_Text micStatusText;
 
-        [Header("Voice Settings")]
-        public bool startListeningOnAwake = true;
-        public float speechCooldown = 2.0f;
+        [Header("Voice Activity Detection (VAD)")]
+        [Tooltip("RMS volume threshold to trigger speech detection (0.015 - 0.04 is typical for laptop mics)")]
+        public float voiceThreshold = 0.022f;
 
-        [Header("Audio Level Monitoring")]
-        public bool monitorMicVolume = true;
-        private AudioClip _micMonitorClip;
+        [Tooltip("Seconds of silence required to consider speech finished")]
+        public float silenceDuration = 0.95f;
+
+        [Tooltip("Minimum speech length in seconds to filter out brief clicks or coughs")]
+        public float minSpeechLength = 0.45f;
+
+        [Tooltip("Maximum allowed utterance length in seconds")]
+        public float maxSpeechLength = 8.0f;
+
+        [Header("Microphone Settings")]
+        public bool startListeningOnAwake = true;
+        public int sampleRate = 16000;
+        public int circularBufferLengthSec = 10;
+
+        // VAD Internal State
+        private enum VADState { Idle, RecordingSpeech, Processing, CarlSpeaking }
+        private VADState _state = VADState.Idle;
+
+        private AudioClip _micClip;
         private string _activeMicDevice;
-        private float[] _volumeSamples = new float[128];
-        private float _currentVolume = 0f;
+        private int _totalBufferSamples;
+        private float[] _rmsSampleBuffer = new float[256];
+        private float _currentRmsVolume = 0f;
+
+        private int _speechStartSample = 0;
+        private float _silenceTimer = 0f;
+        private float _speechDurationTimer = 0f;
+        private float _carlSpeechCooldownTimer = 0f;
 
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-        private KeywordRecognizer _recognizer;
+        private KeywordRecognizer _backupKeywordRecognizer;
 #endif
 
-        private float _lastHeardTime = -10f;
-        private bool _isSpeakingToCarl = false;
-
-        // Expanded natural vocabulary
-        private string[] _keywords = new string[]
+        [Serializable]
+        public class STTResponseData
         {
-            // Greetings & How are you
-            "hi carl how are you",
-            "carl how are you",
-            "how are you carl",
-            "how are you",
-            "hi carl",
-            "hello carl",
-            "hey carl",
-            "carl",
-            "hi",
-            "hello",
-            // Activities & Garden
-            "what are we doing today",
-            "what are we doing",
-            "tell me about the garden",
-            "tell me about garden",
-            "who are you",
-            "what should we plant",
-            "thank you carl",
-            "thank you",
-            "thanks carl",
-            "help me carl"
-        };
+            public string transcription;
+            public string reply;
+            public string emotion;
+            public string action;
+            public string voice_clip;
+        }
 
         private void Awake()
         {
-            // CRITICAL: Ensure Unity keeps listening even when the window is unfocused!
+            // CRITICAL: Ensure Unity microphone continues running even when window is not focused!
             Application.runInBackground = true;
         }
 
@@ -92,173 +101,295 @@ namespace NeuroCompanion.Carl
                     dialogueController = FindFirstObjectByType<CarlDialogueController>();
             }
 
-            if (startListeningOnAwake)
+            StartContinuousMicrophone();
+        }
+
+        private void StartContinuousMicrophone()
+        {
+            if (Microphone.devices.Length == 0)
             {
-                InitializeAndStartVoice();
-                StartMicMonitoring();
+                Debug.LogWarning("[CarlVoiceListener] No microphone detected on this computer.");
+                SetUIStatus("🎙️ No microphone detected (Press Space to test)", new Color(0.85f, 0.4f, 0.4f));
+                return;
+            }
+
+            _activeMicDevice = Microphone.devices[0];
+            _totalBufferSamples = sampleRate * circularBufferLengthSec;
+
+            try
+            {
+                _micClip = Microphone.Start(_activeMicDevice, true, circularBufferLengthSec, sampleRate);
+                Debug.Log($"[CarlVoiceListener] Continuous mic started on '{_activeMicDevice}' ({sampleRate}Hz, {circularBufferLengthSec}s buffer)");
+                SetUIStatus("🎙️ Mic Ready: Speak to Carl anytime (or press Space)", new Color(0.3f, 0.9f, 0.55f));
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[CarlVoiceListener] Error starting microphone: {ex.Message}");
+                SetUIStatus("🎙️ Mic Error: " + ex.Message, new Color(0.85f, 0.4f, 0.4f));
             }
         }
 
         private void Update()
         {
-            // Spacebar or T key instant trigger fallback
+            // Manual hotkey fallback (Spacebar or T key) for instant keyboard testing
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.T))
             {
-                TriggerSimulatedVoice("Hi Carl, how are you?");
+                TriggerManualFallback("Hi Carl, how are you?");
+                return;
             }
 
-            // Real-time volume visualizer on the HUD
-            if (monitorMicVolume && !_isSpeakingToCarl && _micMonitorClip != null && Microphone.IsRecording(_activeMicDevice))
+            // Cooldown while Carl is speaking to avoid acoustic echo feedback
+            if (_carlSpeechCooldownTimer > 0f)
             {
-                UpdateLiveVolumeMeter();
+                _carlSpeechCooldownTimer -= Time.deltaTime;
+                if (_carlSpeechCooldownTimer <= 0f && _state == VADState.CarlSpeaking)
+                {
+                    _state = VADState.Idle;
+                    SetUIStatus("🎙️ Mic Ready: Speak to Carl anytime (or press Space)", new Color(0.3f, 0.9f, 0.55f));
+                }
+                return;
+            }
+
+            if (_micClip == null || string.IsNullOrEmpty(_activeMicDevice) || !Microphone.IsRecording(_activeMicDevice))
+                return;
+
+            // 1. Calculate live RMS volume from microphone write head
+            int currentWritePos = Microphone.GetPosition(_activeMicDevice);
+            if (currentWritePos < 0 || currentWritePos >= _totalBufferSamples) return;
+
+            UpdateRmsVolume(currentWritePos);
+
+            // 2. State Machine for Voice Activity Detection
+            switch (_state)
+            {
+                case VADState.Idle:
+                    UpdateLiveVuMeter(false);
+
+                    if (_currentRmsVolume >= voiceThreshold)
+                    {
+                        // Speech Detected!
+                        _state = VADState.RecordingSpeech;
+                        _speechDurationTimer = 0f;
+                        _silenceTimer = 0f;
+
+                        // Include 0.25 seconds of pre-speech buffer so leading consonants are preserved
+                        int preBufferSamples = (int)(sampleRate * 0.25f);
+                        _speechStartSample = (currentWritePos - preBufferSamples + _totalBufferSamples) % _totalBufferSamples;
+
+                        SetUIStatus("🎙️ Hearing you... Speak naturally", new Color(0.96f, 0.72f, 0.24f));
+                    }
+                    break;
+
+                case VADState.RecordingSpeech:
+                    UpdateLiveVuMeter(true);
+                    _speechDurationTimer += Time.deltaTime;
+
+                    if (_currentRmsVolume >= voiceThreshold)
+                    {
+                        // Active voice sustained: reset silence counter
+                        _silenceTimer = 0f;
+                    }
+                    else
+                    {
+                        // Volume dropped below threshold: count silence
+                        _silenceTimer += Time.deltaTime;
+                    }
+
+                    // End conditions: User stopped speaking (pause > silenceDuration) or max speech length hit
+                    bool silenceFinished = _silenceTimer >= silenceDuration;
+                    bool maxDurationReached = _speechDurationTimer >= maxSpeechLength;
+
+                    if (silenceFinished || maxDurationReached)
+                    {
+                        _state = VADState.Processing;
+                        SetUIStatus("🎙️ Processing speech... Carl is thinking", new Color(0.45f, 0.8f, 0.95f));
+
+                        int speechEndSample = currentWritePos;
+                        ExtractAndSendSpeechAudio(_speechStartSample, speechEndSample);
+                    }
+                    break;
+
+                case VADState.Processing:
+                    // Waiting for HTTP backend response
+                    break;
+
+                case VADState.CarlSpeaking:
+                    // Waiting for Carl to finish speaking
+                    break;
             }
         }
 
-        private void StartMicMonitoring()
+        private void UpdateRmsVolume(int currentWritePos)
         {
-            if (Microphone.devices.Length == 0) return;
-            _activeMicDevice = Microphone.devices[0];
-            try
-            {
-                _micMonitorClip = Microphone.Start(_activeMicDevice, true, 2, 44100);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[CarlVoiceListener] Mic monitoring exception: " + ex.Message);
-            }
-        }
+            int offset = (currentWritePos - _rmsSampleBuffer.Length + _totalBufferSamples) % _totalBufferSamples;
+            _micClip.GetData(_rmsSampleBuffer, offset);
 
-        private void UpdateLiveVolumeMeter()
-        {
-            int micPos = Microphone.GetPosition(_activeMicDevice);
-            if (micPos < _volumeSamples.Length) return;
-
-            _micMonitorClip.GetData(_volumeSamples, micPos - _volumeSamples.Length);
             float sum = 0f;
-            for (int i = 0; i < _volumeSamples.Length; i++)
+            for (int i = 0; i < _rmsSampleBuffer.Length; i++)
             {
-                sum += Mathf.Abs(_volumeSamples[i]);
+                sum += _rmsSampleBuffer[i] * _rmsSampleBuffer[i];
             }
-            float avg = sum / _volumeSamples.Length;
-            _currentVolume = Mathf.Lerp(_currentVolume, avg, Time.deltaTime * 15f);
+            float rms = Mathf.Sqrt(sum / _rmsSampleBuffer.Length);
+            _currentRmsVolume = Mathf.Lerp(_currentRmsVolume, rms, Time.deltaTime * 18f);
+        }
 
-            // Construct volume bars
-            int bars = Mathf.Clamp(Mathf.RoundToInt(_currentVolume * 120f), 0, 5);
+        private void UpdateLiveVuMeter(bool isSpeaking)
+        {
+            if (micStatusText == null) return;
+
+            int bars = Mathf.Clamp(Mathf.RoundToInt((_currentRmsVolume / (voiceThreshold * 2.2f)) * 5f), 0, 5);
             string meter = "";
             for (int b = 0; b < 5; b++)
             {
                 meter += (b < bars) ? "▰" : "▱";
             }
 
-            if (micStatusText != null)
+            if (isSpeaking)
+            {
+                micStatusText.text = $"🎙️ Hearing: {meter} (Listening...)";
+                micStatusText.color = new Color(0.96f, 0.72f, 0.24f);
+            }
+            else
             {
                 if (bars > 0)
                 {
-                    micStatusText.text = $"🎙️ Mic: {meter} (Speaking...)";
-                    micStatusText.color = new Color(0.2f, 0.9f, 0.4f);
+                    micStatusText.text = $"🎙️ Mic: {meter} Speak to Carl";
+                    micStatusText.color = new Color(0.3f, 0.9f, 0.55f);
                 }
                 else
                 {
-                    micStatusText.text = $"🎙️ Mic: {meter} Say \"Hi Carl\" (or Spacebar)";
+                    micStatusText.text = $"🎙️ Mic: {meter} Say anything to Carl (or Spacebar)";
                     micStatusText.color = new Color(0.7f, 0.85f, 0.95f);
                 }
             }
         }
 
-        public void InitializeAndStartVoice()
+        private void ExtractAndSendSpeechAudio(int startSample, int endSample)
         {
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-            if (!PhraseRecognitionSystem.isSupported)
+            int totalSamplesRecorded;
+            if (endSample >= startSample)
             {
-                Debug.LogWarning("[CarlVoiceListener] Windows PhraseRecognitionSystem is not supported on this platform.");
-                SetUIStatus("🎙️ Voice not supported on this OS", new Color(0.8f, 0.4f, 0.4f));
+                totalSamplesRecorded = endSample - startSample;
+            }
+            else
+            {
+                totalSamplesRecorded = (_totalBufferSamples - startSample) + endSample;
+            }
+
+            float durationSeconds = (float)totalSamplesRecorded / sampleRate;
+
+            // Filter out accidental quick noise/clicks
+            if (durationSeconds < minSpeechLength)
+            {
+                Debug.Log($"[CarlVoiceListener] Discarded brief noise ({durationSeconds:F2}s < {minSpeechLength}s)");
+                _state = VADState.Idle;
+                SetUIStatus("🎙️ Mic Ready: Speak to Carl anytime (or press Space)", new Color(0.3f, 0.9f, 0.55f));
                 return;
             }
 
-            if (Microphone.devices.Length == 0)
-            {
-                Debug.LogWarning("[CarlVoiceListener] No microphone detected.");
-                SetUIStatus("🎙️ No microphone connected", new Color(0.8f, 0.4f, 0.4f));
-                return;
-            }
+            Debug.Log($"[CarlVoiceListener] Spoken utterance detected: {durationSeconds:F2}s ({totalSamplesRecorded} samples). Encoding WAV...");
 
-            try
+            float[] speechSamples = new float[totalSamplesRecorded];
+            if (endSample >= startSample)
             {
-                if (_recognizer != null && _recognizer.IsRunning)
+                _micClip.GetData(speechSamples, startSample);
+            }
+            else
+            {
+                int part1Count = _totalBufferSamples - startSample;
+                float[] part1 = new float[part1Count];
+                _micClip.GetData(part1, startSample);
+                Array.Copy(part1, 0, speechSamples, 0, part1Count);
+
+                int part2Count = endSample;
+                if (part2Count > 0)
                 {
-                    _recognizer.Stop();
-                    _recognizer.Dispose();
+                    float[] part2 = new float[part2Count];
+                    _micClip.GetData(part2, 0);
+                    Array.Copy(part2, 0, speechSamples, part1Count, part2Count);
                 }
-
-                _recognizer = new KeywordRecognizer(_keywords, ConfidenceLevel.Low);
-                _recognizer.OnPhraseRecognized += OnPhraseRecognized;
-                _recognizer.Start();
-
-                Debug.Log($"[CarlVoiceListener] Recognizer started on '{Microphone.devices[0]}'. Keywords: {_keywords.Length}");
-                SetUIStatus("🎙️ Mic Ready: Say \"Hi Carl\" (or press Space)", new Color(0.25f, 0.85f, 0.55f));
             }
-            catch (Exception ex)
+
+            // Convert to 16-bit PCM WAV
+            byte[] wavBytes = WavUtility.FromAudioSamples(speechSamples, 1, sampleRate);
+
+            StartCoroutine(SendWavAudioToSTT(wavBytes, durationSeconds));
+        }
+
+        private IEnumerator SendWavAudioToSTT(byte[] wavBytes, float speechDuration)
+        {
+            using (UnityWebRequest req = new UnityWebRequest(voiceSttEndpoint, "POST"))
             {
-                Debug.LogError($"[CarlVoiceListener] Failed to start voice recognizer: {ex.Message}");
-                SetUIStatus("🎙️ Voice error: " + ex.Message, new Color(0.8f, 0.4f, 0.4f));
+                req.uploadHandler = new UploadHandlerRaw(wavBytes);
+                req.downloadHandler = new DownloadHandlerBuffer();
+                req.SetRequestHeader("Content-Type", "audio/wav");
+                req.timeout = 7;
+
+                yield return req.SendWebRequest();
+
+                if (req.result == UnityWebRequest.Result.Success)
+                {
+                    string jsonResponse = req.downloadHandler.text;
+                    Debug.Log($"[CarlVoiceListener] STT Backend response: {jsonResponse}");
+
+                    var sttData = JsonUtility.FromJson<STTResponseData>(jsonResponse);
+                    if (sttData != null && !string.IsNullOrEmpty(sttData.reply))
+                    {
+                        string userTranscript = !string.IsNullOrEmpty(sttData.transcription) ? sttData.transcription : "(Voice detected)";
+                        SetUIStatus($"🎙️ Heard: \"{userTranscript}\"", new Color(0.25f, 0.95f, 0.55f));
+
+                        // Deliver reply through Carl's speech bubble and animated voice
+                        if (dialogueController != null)
+                        {
+                            dialogueController.DeliverCarlReply(sttData.reply, sttData.action);
+                        }
+
+                        // Pause VAD while Carl is speaking (+ 1.5s margin)
+                        _state = VADState.CarlSpeaking;
+                        _carlSpeechCooldownTimer = Mathf.Clamp(sttData.reply.Length * 0.08f, 5.0f, 10.0f);
+                        yield break;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[CarlVoiceListener] STT endpoint failed: {req.error}. Using local companion reply.");
+                }
             }
-#endif
+
+            // Fallback if backend was unreachable or error occurred
+            if (dialogueController != null)
+            {
+                dialogueController.SendMessageToCarl("Hi Carl, how are you?");
+            }
+
+            _state = VADState.CarlSpeaking;
+            _carlSpeechCooldownTimer = 6.0f;
         }
 
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-        private void OnPhraseRecognized(PhraseRecognizedEventArgs args)
+        public void TriggerManualFallback(string phrase)
         {
-            if (Time.time - _lastHeardTime < speechCooldown)
-                return;
+            _state = VADState.CarlSpeaking;
+            _carlSpeechCooldownTimer = 7.0f;
 
-            _lastHeardTime = Time.time;
-            string spoken = args.text;
-            Debug.Log($"[CarlVoiceListener] Recognized voice phrase: '{spoken}' (Confidence: {args.confidence})");
-
-            TriggerSimulatedVoice(spoken);
-        }
-#endif
-
-        public void TriggerSimulatedVoice(string phrase)
-        {
-            _isSpeakingToCarl = true;
-            SetUIStatus($"🎙️ Heard: \"{phrase}\" ➔ Carl is replying...", new Color(0.96f, 0.72f, 0.24f));
+            SetUIStatus($"🎙️ Input: \"{phrase}\" ➔ Carl is replying...", new Color(0.96f, 0.72f, 0.24f));
 
             if (dialogueController != null)
             {
                 dialogueController.SendMessageToCarl(phrase);
             }
-
-            StopAllCoroutines();
-            StartCoroutine(RestoreStatusPromptRoutine());
         }
 
-        private IEnumerator RestoreStatusPromptRoutine()
-        {
-            yield return new WaitForSeconds(8.0f);
-            _isSpeakingToCarl = false;
-            SetUIStatus("🎙️ Mic Ready: Say \"Hi Carl\" (or press Space)", new Color(0.25f, 0.85f, 0.55f));
-        }
-
-        private void SetUIStatus(string status, Color color)
+        private void SetUIStatus(string text, Color color)
         {
             if (micStatusText != null)
             {
-                micStatusText.text = status;
+                micStatusText.text = text;
                 micStatusText.color = color;
             }
         }
 
         private void OnDestroy()
         {
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-            if (_recognizer != null)
-            {
-                if (_recognizer.IsRunning) _recognizer.Stop();
-                _recognizer.Dispose();
-                _recognizer = null;
-            }
-#endif
             if (!string.IsNullOrEmpty(_activeMicDevice) && Microphone.IsRecording(_activeMicDevice))
             {
                 Microphone.End(_activeMicDevice);

@@ -23,7 +23,8 @@ namespace NeuroCompanion.Backend.Editor
             }
 
             var hud = canvasGo.transform.Find("Patient_HUD");
-            Transform parentPanel = hud != null ? hud : canvasGo.transform;
+            if (hud != null) hud.gameObject.SetActive(true);
+            Transform parentPanel = canvasGo.transform;
 
             // 2. Remove bottom chat panel completely
             var prevChat = parentPanel.Find("Carl_Chat_Panel");
