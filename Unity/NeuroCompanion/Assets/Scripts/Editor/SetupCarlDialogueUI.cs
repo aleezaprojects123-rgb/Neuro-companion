@@ -12,7 +12,7 @@ namespace NeuroCompanion.Backend.Editor
         [MenuItem("NeuroCompanion/Setup Carl Dialogue System")]
         public static void Setup()
         {
-            Debug.Log("[SetupCarlDialogueUI] Building Carl Dialogue HUD and Speech System...");
+            Debug.Log("[SetupCarlDialogueUI] Building Carl Dialogue HUD with Hands-Free Voice Recognition...");
 
             // 1. Locate UI Canvas
             var canvasGo = GameObject.Find("[UI]");
@@ -106,7 +106,7 @@ namespace NeuroCompanion.Backend.Editor
             bubbleGo.SetActive(false); // Initially hidden
 
             // ========================================================
-            // BUILD CARL CHAT INPUT PANEL (BOTTOM-CENTER OF SCREEN)
+            // BUILD CARL CHAT & VOICE PANEL (BOTTOM-CENTER OF SCREEN)
             // ========================================================
             var chatPanelGo = new GameObject("Carl_Chat_Panel");
             chatPanelGo.transform.SetParent(parentPanel, false);
@@ -114,21 +114,38 @@ namespace NeuroCompanion.Backend.Editor
             chatRt.anchorMin = new Vector2(0.5f, 0f);
             chatRt.anchorMax = new Vector2(0.5f, 0f);
             chatRt.pivot = new Vector2(0.5f, 0f);
-            chatRt.anchoredPosition = new Vector2(0f, 25f);
-            chatRt.sizeDelta = new Vector2(760f, 115f);
+            chatRt.anchoredPosition = new Vector2(0f, 20f);
+            chatRt.sizeDelta = new Vector2(800f, 140f);
 
             var chatBg = chatPanelGo.AddComponent<Image>();
-            chatBg.color = new Color(0.06f, 0.09f, 0.12f, 0.85f); // Deep soothing panel
+            chatBg.color = new Color(0.06f, 0.09f, 0.13f, 0.88f); // Deep soothing panel
 
-            // 1. Quick Speak Pills Row
+            // 1. Hands-Free Voice Status Banner (Top of Panel)
+            var voiceStatusGo = new GameObject("VoiceStatusBanner");
+            voiceStatusGo.transform.SetParent(chatPanelGo.transform, false);
+            var voiceStatusRt = voiceStatusGo.AddComponent<RectTransform>();
+            voiceStatusRt.anchorMin = new Vector2(0f, 1f);
+            voiceStatusRt.anchorMax = new Vector2(1f, 1f);
+            voiceStatusRt.pivot = new Vector2(0.5f, 1f);
+            voiceStatusRt.anchoredPosition = new Vector2(0f, -8f);
+            voiceStatusRt.sizeDelta = new Vector2(0f, 28f);
+
+            var voiceStatusTmp = voiceStatusGo.AddComponent<TextMeshProUGUI>();
+            voiceStatusTmp.text = "🎙️ Voice Active — Speak to Carl anytime! (Say: \"Hi Carl, how are you?\")";
+            voiceStatusTmp.fontSize = 14;
+            voiceStatusTmp.fontStyle = FontStyles.Bold;
+            voiceStatusTmp.color = new Color(0.25f, 0.85f, 0.55f); // Gentle reassuring green
+            voiceStatusTmp.alignment = TextAlignmentOptions.Center;
+
+            // 2. Quick Speak Pills Row
             var pillsRowGo = new GameObject("QuickPillsRow");
             pillsRowGo.transform.SetParent(chatPanelGo.transform, false);
             var pillsRt = pillsRowGo.AddComponent<RectTransform>();
             pillsRt.anchorMin = new Vector2(0f, 1f);
             pillsRt.anchorMax = new Vector2(1f, 1f);
             pillsRt.pivot = new Vector2(0.5f, 1f);
-            pillsRt.anchoredPosition = new Vector2(0f, -10f);
-            pillsRt.sizeDelta = new Vector2(0f, 36f);
+            pillsRt.anchoredPosition = new Vector2(0f, -38f);
+            pillsRt.sizeDelta = new Vector2(0f, 34f);
 
             var pillsLayout = pillsRowGo.AddComponent<HorizontalLayoutGroup>();
             pillsLayout.childAlignment = TextAnchor.MiddleCenter;
@@ -141,7 +158,7 @@ namespace NeuroCompanion.Backend.Editor
             var pill2 = CreatePillButton(pillsRowGo.transform, "Pill_WhatDo", "🌱 What are we doing today?");
             var pill3 = CreatePillButton(pillsRowGo.transform, "Pill_Garden", "🌸 Tell me about the garden");
 
-            // 2. Input & Send Row
+            // 3. Input & Send Row
             var inputRowGo = new GameObject("InputRow");
             inputRowGo.transform.SetParent(chatPanelGo.transform, false);
             var inputRowRt = inputRowGo.AddComponent<RectTransform>();
@@ -185,7 +202,7 @@ namespace NeuroCompanion.Backend.Editor
             placeholderRt.offsetMin = Vector2.zero;
             placeholderRt.offsetMax = Vector2.zero;
             var placeholderText = placeholderGo.AddComponent<TextMeshProUGUI>();
-            placeholderText.text = "Type here to talk to Carl... (e.g. 'hi carl how are u') or click a pill above";
+            placeholderText.text = "Speak into mic or type here (e.g. 'hi carl how are u')...";
             placeholderText.fontSize = 15;
             placeholderText.fontStyle = FontStyles.Italic;
             placeholderText.color = new Color(0.6f, 0.65f, 0.72f);
@@ -263,6 +280,16 @@ namespace NeuroCompanion.Backend.Editor
             var head = carlGo.transform.Find("CarlHead") ?? carlGo.transform.Find("Head");
             if (head != null) dialogueCtrl.headTransform = head;
 
+            // ========================================================
+            // ATTACH & CONFIGURE CarlVoiceListener (MICROPHONE RECOGNIZER)
+            // ========================================================
+            var voiceListener = carlGo.GetComponent<CarlVoiceListener>();
+            if (voiceListener == null) voiceListener = carlGo.AddComponent<CarlVoiceListener>();
+
+            voiceListener.dialogueController = dialogueCtrl;
+            voiceListener.micStatusText = voiceStatusTmp;
+            voiceListener.startListeningOnAwake = true;
+
             // Mark Scene Dirty and Save
             EditorUtility.SetDirty(carlGo);
             EditorUtility.SetDirty(chatPanelGo);
@@ -271,7 +298,7 @@ namespace NeuroCompanion.Backend.Editor
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
             AssetDatabase.SaveAssets();
 
-            Debug.Log("[SetupCarlDialogueUI] Carl Interactive Dialogue System configured and saved successfully!");
+            Debug.Log("[SetupCarlDialogueUI] Carl Hands-Free Voice & Dialogue System configured and saved successfully!");
         }
 
         private static Button CreatePillButton(Transform parent, string name, string label)
