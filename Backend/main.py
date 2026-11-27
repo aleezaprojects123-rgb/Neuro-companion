@@ -53,6 +53,7 @@ from telemetry.routes import router as telemetry_router
 from telemetry.extended_routes import extended_router
 from api.routes.assistance import assistance_router
 from api.routes.auth import auth_router
+from api.routes.carl_chat import carl_chat_router
 
 # ---------------------------------------------------------------------------
 # API Contract constants (P2A-30)
@@ -114,6 +115,9 @@ app.include_router(assistance_router)
 
 # Authentication and User Profiles Router
 app.include_router(auth_router)
+
+# Phase 6.5 Carl Conversational Companion Chat Router (POST /api/v1/carl/chat)
+app.include_router(carl_chat_router)
 
 
 # ---------------------------------------------------------------------------
