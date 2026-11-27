@@ -50,6 +50,18 @@ namespace NeuroCompanion.Carl
         public AudioClip clipGardenPeace; // "The garden is coming along wonderfully..."
         public AudioClip clipWelcome;     // Initial greeting
 
+        [Header("Conversational Audio Bridge (Instant 0.28s Response)")]
+        public AudioClip[] bridgeClips;
+        public string[] bridgePhrases = new string[]
+        {
+            "Well now, let me see...",
+            "Ah, indeed, my friend...",
+            "Well, let me think on that a moment..."
+        };
+
+        private Coroutine _bridgeRoutine;
+        private bool _isBridgeActive = false;
+
         [Header("Dialogue Animation Parameters")]
         public float typewritingSpeed = 0.025f;
         public float autoDismissDelay = 6.0f;
@@ -76,10 +88,36 @@ namespace NeuroCompanion.Carl
             public string emotion;
             public string action;
             public string voice_clip;
+            public string audio_base64;
+        }
+
+        private void Awake()
+        {
+#if UNITY_EDITOR
+            LoadBridgeClipsIfEmpty();
+#endif
+        }
+
+        public void LoadBridgeClipsIfEmpty()
+        {
+#if UNITY_EDITOR
+            if (bridgeClips == null || bridgeClips.Length == 0)
+            {
+                bridgeClips = new AudioClip[]
+                {
+                    UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/CarlBridge_1.wav"),
+                    UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/CarlBridge_2.wav"),
+                    UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/CarlBridge_3.wav")
+                };
+            }
+#endif
         }
 
         private void Start()
         {
+#if UNITY_EDITOR
+            LoadBridgeClipsIfEmpty();
+#endif
             // Auto-locate references if unassigned
             if (carlAudioSource == null) carlAudioSource = GetComponent<AudioSource>();
             if (faceSkinnedMesh == null) faceSkinnedMesh = GetComponentInChildren<SkinnedMeshRenderer>();
@@ -156,6 +194,7 @@ namespace NeuroCompanion.Carl
         {
             string reply = "";
             string action = "talk";
+            AudioClip dynamicClip = null;
 
             var payload = new ChatPayload { message = userText, patient_id = patientId };
             string jsonBody = JsonUtility.ToJson(payload);
@@ -178,6 +217,19 @@ namespace NeuroCompanion.Carl
                     {
                         reply = resp.reply;
                         action = resp.action;
+
+                        if (!string.IsNullOrEmpty(resp.audio_base64))
+                        {
+                            try
+                            {
+                                byte[] dynamicBytes = Convert.FromBase64String(resp.audio_base64);
+                                dynamicClip = WavUtility.ToAudioClip(dynamicBytes, "DynamicCarlReply");
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogWarning("[CarlDialogueController] Dynamic audio parse error: " + ex.Message);
+                            }
+                        }
                     }
                 }
                 else
@@ -192,7 +244,7 @@ namespace NeuroCompanion.Carl
             }
 
             // Deliver Carl's response visually and with voice/lip-sync
-            DeliverCarlReply(reply, action);
+            DeliverCarlReply(reply, action, dynamicClip);
         }
 
         private string GetLocalFallbackReply(string msg)
@@ -210,9 +262,42 @@ namespace NeuroCompanion.Carl
             return "I'm doing just fine, thank you! It's a wonderful day in our garden. How are you feeling today?";
         }
 
-        public void DeliverCarlReply(string replyText, string action = "talk")
+        private Coroutine _deliverRoutine;
+
+        public void DeliverCarlReply(string replyText, string action = "talk", AudioClip dynamicAudioClip = null)
         {
-            Debug.Log($"[CarlDialogueController] Carl replies: '{replyText}'");
+            if (_deliverRoutine != null)
+            {
+                StopCoroutine(_deliverRoutine);
+            }
+            _deliverRoutine = StartCoroutine(DeliverCarlReplyRoutine(replyText, action, dynamicAudioClip));
+        }
+
+        private IEnumerator DeliverCarlReplyRoutine(string replyText, string action, AudioClip dynamicAudioClip)
+        {
+            Debug.Log($"[CarlDialogueController] Delivering Carl reply: '{replyText}' (dynamicAudio: {dynamicAudioClip != null})");
+
+            if (_thinkingRoutine != null)
+            {
+                StopCoroutine(_thinkingRoutine);
+                _thinkingRoutine = null;
+            }
+
+            // If Carl is currently speaking the bridge opening phrase, let him calmly finish the phrase!
+            if (_isBridgeActive && carlAudioSource != null && carlAudioSource.isPlaying)
+            {
+                while (carlAudioSource.isPlaying && _isBridgeActive)
+                {
+                    yield return null;
+                }
+            }
+
+            if (_bridgeRoutine != null)
+            {
+                StopCoroutine(_bridgeRoutine);
+                _isBridgeActive = false;
+                _bridgeRoutine = null;
+            }
 
             // 1. Show speech bubble with speaker name
             if (speechBubblePanel != null)
@@ -224,12 +309,8 @@ namespace NeuroCompanion.Carl
                 speakerNameText.text = "👴 Carl Fredricksen";
             }
 
-            // 2. Typewriter text reveal
-            if (_typewriterRoutine != null) StopCoroutine(_typewriterRoutine);
-            _typewriterRoutine = StartCoroutine(TypewriterRoutine(replyText));
-
-            // 3. Select matching voice audio clip
-            AudioClip clipToPlay = SelectMatchingVoiceClip(replyText);
+            // 2. Play dynamic speech audio or fallback to matching voice clip
+            AudioClip clipToPlay = dynamicAudioClip != null ? dynamicAudioClip : SelectMatchingVoiceClip(replyText);
 
             if (carlAudioSource != null && clipToPlay != null)
             {
@@ -237,11 +318,16 @@ namespace NeuroCompanion.Carl
                 carlAudioSource.clip = clipToPlay;
                 carlAudioSource.Play();
                 _speakingDuration = clipToPlay.length;
+                typewritingSpeed = 0.012f;
             }
             else
             {
                 _speakingDuration = Mathf.Clamp(replyText.Length * 0.065f, 3.0f, 7.0f);
             }
+
+            // 3. Typewriter text reveal synchronized with speech
+            if (_typewriterRoutine != null) StopCoroutine(_typewriterRoutine);
+            _typewriterRoutine = StartCoroutine(TypewriterRoutine(replyText));
 
             // 4. Start speaking lip sync and head gestures
             _speakingTimer = 0f;
@@ -265,14 +351,23 @@ namespace NeuroCompanion.Carl
 
         private IEnumerator TypewriterRoutine(string fullText)
         {
-            if (speechBubbleText == null) yield break;
+            if (speechBubbleText == null || string.IsNullOrEmpty(fullText)) yield break;
 
             speechBubbleText.text = "";
-            for (int i = 0; i <= fullText.Length; i++)
+            // Perfect 1:1 synchronization with Carl's spoken voice
+            // Text reveals smoothly frame-by-frame, perfectly matching Carl's spoken speech cadence
+            float targetDuration = Mathf.Max(_speakingDuration * 0.90f, 0.8f);
+            float elapsed = 0f;
+
+            while (elapsed < targetDuration)
             {
-                speechBubbleText.text = fullText.Substring(0, i);
-                yield return new WaitForSeconds(typewritingSpeed);
+                elapsed += Time.deltaTime;
+                float progress = Mathf.Clamp01(elapsed / targetDuration);
+                int charIndex = Mathf.Clamp(Mathf.RoundToInt(progress * fullText.Length), 0, fullText.Length);
+                speechBubbleText.text = fullText.Substring(0, charIndex);
+                yield return null;
             }
+            speechBubbleText.text = fullText;
 
             // Wait autoDismissDelay then fade/dismiss bubble
             yield return new WaitForSeconds(autoDismissDelay);
@@ -282,7 +377,7 @@ namespace NeuroCompanion.Carl
             }
         }
 
-        private void StopSpeakingAnimation()
+        public void StopSpeakingAnimation()
         {
             _isSpeaking = false;
             if (faceSkinnedMesh != null)
@@ -294,6 +389,99 @@ namespace NeuroCompanion.Carl
             {
                 headTransform.localRotation = Quaternion.identity;
             }
+        }
+
+        /// <summary>
+        /// Instant zero-lag response: Carl immediately opens his mouth and speaks a calm
+        /// conversational bridge phrase in under 0.3s while Gemini thinks in the background.
+        /// </summary>
+        public void PlayConversationalBridge()
+        {
+            if (_isSpeaking && !_isBridgeActive) return;
+
+            if (_thinkingRoutine != null)
+            {
+                StopCoroutine(_thinkingRoutine);
+                _thinkingRoutine = null;
+            }
+
+            if (_bridgeRoutine != null) StopCoroutine(_bridgeRoutine);
+            _bridgeRoutine = StartCoroutine(BridgeRoutine());
+        }
+
+        private IEnumerator BridgeRoutine()
+        {
+            _isBridgeActive = true;
+            int idx = UnityEngine.Random.Range(0, bridgePhrases.Length);
+            string phrase = bridgePhrases[idx];
+
+            if (speechBubblePanel != null) speechBubblePanel.SetActive(true);
+            if (speakerNameText != null) speakerNameText.text = "👴 Carl Fredricksen";
+
+            AudioClip clip = (bridgeClips != null && idx < bridgeClips.Length) ? bridgeClips[idx] : null;
+
+            if (carlAudioSource != null && clip != null)
+            {
+                carlAudioSource.Stop();
+                carlAudioSource.clip = clip;
+                carlAudioSource.Play();
+                _speakingDuration = clip.length;
+            }
+            else
+            {
+                _speakingDuration = 1.35f;
+            }
+
+            // Reveal bridge phrase simultaneously with speech
+            if (_typewriterRoutine != null) StopCoroutine(_typewriterRoutine);
+            _typewriterRoutine = StartCoroutine(TypewriterRoutine(phrase));
+
+            _isSpeaking = true;
+            _speakingTimer = 0f;
+
+            while (_speakingTimer < _speakingDuration && _isBridgeActive)
+            {
+                yield return null;
+            }
+
+            _isBridgeActive = false;
+            _bridgeRoutine = null;
+        }
+
+        private Coroutine _thinkingRoutine;
+
+        /// <summary>
+        /// Instant zero-lag reaction: Carl immediately nods and tilts his head thoughtfully
+        /// the exact moment the patient finishes speaking, eliminating all perceived wait time.
+        /// </summary>
+        public void TriggerThinkingReaction()
+        {
+            if (_thinkingRoutine != null) StopCoroutine(_thinkingRoutine);
+            _thinkingRoutine = StartCoroutine(ThinkingNodRoutine());
+        }
+
+        private IEnumerator ThinkingNodRoutine()
+        {
+            if (headTransform == null) yield break;
+            float elapsed = 0f;
+            Quaternion originalRot = headTransform.localRotation;
+            while (elapsed < 1.8f && !_isSpeaking)
+            {
+                elapsed += Time.deltaTime;
+                float nod = Mathf.Sin(elapsed * 4.0f) * 3.5f;
+                float tilt = Mathf.Sin(elapsed * 2.0f) * 2.0f;
+                headTransform.localRotation = originalRot * Quaternion.Euler(nod, tilt, 0f);
+                if (faceSkinnedMesh != null)
+                {
+                    faceSkinnedMesh.SetBlendShapeWeight(1, 35f); // Gentle smile
+                }
+                yield return null;
+            }
+            if (!_isSpeaking && headTransform != null)
+            {
+                headTransform.localRotation = originalRot;
+            }
+            _thinkingRoutine = null;
         }
 
         [ContextMenu("Test Voice Audio: 'I'm doing just fine'")]

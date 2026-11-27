@@ -2,12 +2,11 @@
 // CarlVoiceListener.cs — Unity 6.3 LTS
 // NeuroCompanion — Robust Hands-Free Voice Activity Detection (VAD) + Backend STT
 //
-// 1. Automatically queries hardware sample rate (e.g. 48000Hz on Realtek Laptop Audio).
-// 2. Sensitive voice detection threshold (0.008f) with live visual volume meter.
-// 3. Automatically records speech when you talk and sends to /api/v1/carl/voice-stt.
-// 4. Understands ANY open-ended English sentence without fixed keyword restrictions.
+// 1. Balanced digital microphone gain (8.0f) — avoids fan/room noise false triggers.
+// 2. Speaker Feedback Shield — completely ignores mic while Carl's audio is playing.
+// 3. Unity New Input System safe (no legacy Input crashes).
+// 4. Encodes spoken audio to WAV and POSTs to /api/v1/carl/voice-stt.
 // 5. Keeps Unity audio alive in background (Application.runInBackground = true).
-// 6. Spacebar / T key instant fallback available anytime for keyboard testing.
 // ============================================================
 
 using System;
@@ -17,6 +16,10 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using TMPro;
+
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace NeuroCompanion.Carl
 {
@@ -33,11 +36,14 @@ namespace NeuroCompanion.Carl
         public TMP_Text micStatusText;
 
         [Header("Voice Activity Detection (VAD)")]
-        [Tooltip("RMS volume threshold to trigger speech detection (0.006 - 0.015 for laptop mics)")]
-        public float voiceThreshold = 0.008f;
+        [Tooltip("Digital software microphone gain multiplier")]
+        public float micGain = 8.0f;
 
-        [Tooltip("Seconds of silence required to consider speech finished")]
-        public float silenceDuration = 0.85f;
+        [Tooltip("Amplified RMS volume threshold to trigger speech detection (0.045 - 0.065 is ideal)")]
+        public float voiceThreshold = 0.055f;
+
+        [Tooltip("Seconds of silence required to consider speech finished (0.25 - 0.35s is ultra-fast)")]
+        public float silenceDuration = 0.28f;
 
         [Tooltip("Minimum speech length in seconds to filter out brief clicks or coughs")]
         public float minSpeechLength = 0.40f;
@@ -46,24 +52,28 @@ namespace NeuroCompanion.Carl
         public float maxSpeechLength = 8.0f;
 
         [Header("Microphone Settings")]
-        public bool startListeningOnAwake = true;
+        public bool startListeningOnAwake = false;
         public int sampleRate = 48000;
         public int circularBufferLengthSec = 10;
 
         // VAD Internal State
         private enum VADState { Idle, RecordingSpeech, Processing, CarlSpeaking }
         private VADState _state = VADState.Idle;
+        private bool _isListeningActive = false;
 
         private AudioClip _micClip;
         private string _activeMicDevice;
         private int _totalBufferSamples;
-        private float[] _rmsSampleBuffer = new float[256];
+        private float[] _rmsSampleBuffer = new float[512];
         private float _currentRmsVolume = 0f;
+        private float _ambientNoiseFloor = 0.005f;
 
         private int _speechStartSample = 0;
         private float _silenceTimer = 0f;
         private float _speechDurationTimer = 0f;
         private float _carlSpeechCooldownTimer = 0f;
+        private float _sustainedVoiceTimer = 0f;
+        private float _actualVoicedDuration = 0f;
 
         [Serializable]
         public class STTResponseData
@@ -73,11 +83,11 @@ namespace NeuroCompanion.Carl
             public string emotion;
             public string action;
             public string voice_clip;
+            public string audio_base64;
         }
 
         private void Awake()
         {
-            // CRITICAL: Ensure Unity microphone continues running even when window is not focused!
             Application.runInBackground = true;
         }
 
@@ -94,8 +104,33 @@ namespace NeuroCompanion.Carl
 
             if (startListeningOnAwake)
             {
-                StartContinuousMicrophone();
+                EnableVoiceListening();
             }
+            else
+            {
+                _isListeningActive = false;
+                SetUIStatus("", Color.clear);
+            }
+        }
+
+        public void EnableVoiceListening()
+        {
+            _isListeningActive = true;
+            _state = VADState.Idle;
+            StartContinuousMicrophone();
+            Debug.Log("[CarlVoiceListener] Voice listening enabled for Patient Mode.");
+        }
+
+        public void DisableVoiceListening()
+        {
+            _isListeningActive = false;
+            _state = VADState.Idle;
+            if (!string.IsNullOrEmpty(_activeMicDevice) && Microphone.IsRecording(_activeMicDevice))
+            {
+                Microphone.End(_activeMicDevice);
+            }
+            SetUIStatus("", Color.clear);
+            Debug.Log("[CarlVoiceListener] Voice listening disabled.");
         }
 
         public void StartContinuousMicrophone()
@@ -109,7 +144,6 @@ namespace NeuroCompanion.Carl
 
             _activeMicDevice = Microphone.devices[0];
 
-            // Auto-detect hardware supported sample rate (Realtek mic requires 48000Hz)
             int minFreq, maxFreq;
             Microphone.GetDeviceCaps(_activeMicDevice, out minFreq, out maxFreq);
             if (maxFreq > 0)
@@ -129,8 +163,8 @@ namespace NeuroCompanion.Carl
                 }
 
                 _micClip = Microphone.Start(_activeMicDevice, true, circularBufferLengthSec, sampleRate);
-                Debug.Log($"[CarlVoiceListener] Microphone successfully started: '{_activeMicDevice}' at {sampleRate}Hz (Caps: {minFreq}-{maxFreq}Hz)");
-                SetUIStatus("🎙️ Mic Ready: Speak to Carl anytime (or press Space)", new Color(0.3f, 0.9f, 0.55f));
+                Debug.Log($"[CarlVoiceListener] Microphone successfully started: '{_activeMicDevice}' at {sampleRate}Hz");
+                SetUIStatus("🎙️ Mic Ready: Speak to Carl anytime", new Color(0.3f, 0.9f, 0.55f));
             }
             catch (Exception ex)
             {
@@ -141,99 +175,156 @@ namespace NeuroCompanion.Carl
 
         private void Update()
         {
-            // Manual hotkey fallback (Spacebar or T key) for instant keyboard testing
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.T))
-            {
-                TriggerManualFallback("Hi Carl, how are you?");
-                return;
-            }
+            if (!_isListeningActive) return;
 
-            // Cooldown while Carl is speaking to avoid acoustic echo feedback
-            if (_carlSpeechCooldownTimer > 0f)
+            try
             {
-                _carlSpeechCooldownTimer -= Time.deltaTime;
-                if (_carlSpeechCooldownTimer <= 0f && _state == VADState.CarlSpeaking)
+                // Safe hotkey fallback check for Unity New Input System
+                if (CheckHotkeyTriggered())
                 {
-                    _state = VADState.Idle;
-                    SetUIStatus("🎙️ Mic Ready: Speak to Carl anytime (or press Space)", new Color(0.3f, 0.9f, 0.55f));
+                    TriggerManualFallback("Hi Carl, how are you?");
+                    return;
                 }
-                return;
-            }
 
-            if (_micClip == null || string.IsNullOrEmpty(_activeMicDevice) || !Microphone.IsRecording(_activeMicDevice))
-            {
-                // Auto-recover microphone if it stopped
-                if (Time.frameCount % 120 == 0 && Microphone.devices.Length > 0)
+                // 1. SPEAKER FEEDBACK SHIELD: While Carl is speaking out loud, ignore mic input completely!
+                bool carlIsTalking = IsCarlCurrentlySpeaking();
+                if (carlIsTalking)
                 {
-                    StartContinuousMicrophone();
+                    _state = VADState.CarlSpeaking;
+                    _carlSpeechCooldownTimer = 2.0f; // 2s safety buffer after Carl speaks so speakers don't re-trigger mic
+                    _sustainedVoiceTimer = 0f;
+                    _actualVoicedDuration = 0f;
+                    return;
                 }
-                return;
+
+                // Cooldown countdown right after Carl finishes speaking
+                if (_carlSpeechCooldownTimer > 0f)
+                {
+                    _carlSpeechCooldownTimer -= Time.deltaTime;
+                    if (_carlSpeechCooldownTimer <= 0f && _state == VADState.CarlSpeaking)
+                    {
+                        _state = VADState.Idle;
+                        _sustainedVoiceTimer = 0f;
+                        _actualVoicedDuration = 0f;
+                        SetUIStatus("🎙️ Mic Ready: Speak to Carl anytime", new Color(0.3f, 0.9f, 0.55f));
+                    }
+                    return;
+                }
+
+                if (_micClip == null || string.IsNullOrEmpty(_activeMicDevice) || !Microphone.IsRecording(_activeMicDevice))
+                {
+                    if (Time.frameCount % 180 == 0 && Microphone.devices.Length > 0)
+                    {
+                        StartContinuousMicrophone();
+                    }
+                    return;
+                }
+
+                // 2. Calculate amplified live RMS volume
+                int currentWritePos = Microphone.GetPosition(_activeMicDevice);
+                if (currentWritePos < 0 || currentWritePos >= _totalBufferSamples) return;
+
+                UpdateRmsVolume(currentWritePos);
+
+                // Dynamic trigger threshold: base threshold or 2.8x ambient room noise floor
+                float effectiveThreshold = Mathf.Max(voiceThreshold, _ambientNoiseFloor * 2.8f);
+
+                // 3. State Machine for Voice Activity Detection
+                switch (_state)
+                {
+                    case VADState.Idle:
+                        UpdateLiveVuMeter(false, effectiveThreshold);
+
+                        // Slowly adapt to ambient room noise floor (safely bounded)
+                        _ambientNoiseFloor = Mathf.Lerp(_ambientNoiseFloor, _currentRmsVolume, Time.deltaTime * 0.3f);
+                        _ambientNoiseFloor = Mathf.Clamp(_ambientNoiseFloor, 0.002f, 0.04f);
+
+                        if (_currentRmsVolume >= effectiveThreshold)
+                        {
+                            _sustainedVoiceTimer += Time.deltaTime;
+                            // Require at least 0.12s of continuous voice sound to filter out room clicks, keyboard, fan noise
+                            if (_sustainedVoiceTimer >= 0.12f)
+                            {
+                                // Human Voice Confirmed!
+                                _state = VADState.RecordingSpeech;
+                                _speechDurationTimer = _sustainedVoiceTimer;
+                                _actualVoicedDuration = _sustainedVoiceTimer;
+                                _silenceTimer = 0f;
+                                _sustainedVoiceTimer = 0f;
+
+                                int preBufferSamples = (int)(sampleRate * 0.30f);
+                                _speechStartSample = (currentWritePos - preBufferSamples + _totalBufferSamples) % _totalBufferSamples;
+
+                                SetUIStatus("🎙️ Hearing you... Speak naturally", new Color(0.96f, 0.72f, 0.24f));
+                            }
+                        }
+                        else
+                        {
+                            _sustainedVoiceTimer = Mathf.Max(0f, _sustainedVoiceTimer - Time.deltaTime * 2.0f);
+                        }
+                        break;
+
+                    case VADState.RecordingSpeech:
+                        UpdateLiveVuMeter(true, effectiveThreshold);
+                        _speechDurationTimer += Time.deltaTime;
+
+                        if (_currentRmsVolume >= effectiveThreshold)
+                        {
+                            _actualVoicedDuration += Time.deltaTime;
+                            _silenceTimer = 0f;
+                        }
+                        else
+                        {
+                            _silenceTimer += Time.deltaTime;
+                        }
+
+                        bool silenceFinished = _silenceTimer >= silenceDuration;
+                        bool maxDurationReached = _speechDurationTimer >= maxSpeechLength;
+
+                        if (silenceFinished || maxDurationReached)
+                        {
+                            _state = VADState.Processing;
+                            SetUIStatus("🎙️ Carl is replying...", new Color(0.96f, 0.72f, 0.24f));
+
+                            int speechEndSample = currentWritePos;
+                            ExtractAndSendSpeechAudio(_speechStartSample, speechEndSample);
+                        }
+                        break;
+
+                    case VADState.Processing:
+                        break;
+                }
             }
-
-            // 1. Calculate live RMS volume from microphone write head
-            int currentWritePos = Microphone.GetPosition(_activeMicDevice);
-            if (currentWritePos < 0 || currentWritePos >= _totalBufferSamples) return;
-
-            UpdateRmsVolume(currentWritePos);
-
-            // 2. State Machine for Voice Activity Detection
-            switch (_state)
+            catch (Exception ex)
             {
-                case VADState.Idle:
-                    UpdateLiveVuMeter(false);
-
-                    if (_currentRmsVolume >= voiceThreshold)
-                    {
-                        // Speech Detected!
-                        _state = VADState.RecordingSpeech;
-                        _speechDurationTimer = 0f;
-                        _silenceTimer = 0f;
-
-                        // Include 0.25 seconds of pre-speech buffer so leading consonants are preserved
-                        int preBufferSamples = (int)(sampleRate * 0.25f);
-                        _speechStartSample = (currentWritePos - preBufferSamples + _totalBufferSamples) % _totalBufferSamples;
-
-                        SetUIStatus("🎙️ Hearing you... Speak naturally", new Color(0.96f, 0.72f, 0.24f));
-                    }
-                    break;
-
-                case VADState.RecordingSpeech:
-                    UpdateLiveVuMeter(true);
-                    _speechDurationTimer += Time.deltaTime;
-
-                    if (_currentRmsVolume >= voiceThreshold)
-                    {
-                        // Active voice sustained: reset silence counter
-                        _silenceTimer = 0f;
-                    }
-                    else
-                    {
-                        // Volume dropped below threshold: count silence
-                        _silenceTimer += Time.deltaTime;
-                    }
-
-                    // End conditions: User stopped speaking (pause > silenceDuration) or max speech length hit
-                    bool silenceFinished = _silenceTimer >= silenceDuration;
-                    bool maxDurationReached = _speechDurationTimer >= maxSpeechLength;
-
-                    if (silenceFinished || maxDurationReached)
-                    {
-                        _state = VADState.Processing;
-                        SetUIStatus("🎙️ Processing speech... Carl is thinking", new Color(0.45f, 0.8f, 0.95f));
-
-                        int speechEndSample = currentWritePos;
-                        ExtractAndSendSpeechAudio(_speechStartSample, speechEndSample);
-                    }
-                    break;
-
-                case VADState.Processing:
-                    // Waiting for HTTP backend response
-                    break;
-
-                case VADState.CarlSpeaking:
-                    // Waiting for Carl to finish speaking
-                    break;
+                Debug.LogWarning("[CarlVoiceListener] Exception in Update: " + ex.Message);
             }
+        }
+
+        private bool IsCarlCurrentlySpeaking()
+        {
+            if (dialogueController != null)
+            {
+                if (dialogueController.carlAudioSource != null && dialogueController.carlAudioSource.isPlaying)
+                    return true;
+            }
+            return false;
+        }
+
+        private bool CheckHotkeyTriggered()
+        {
+            try
+            {
+#if ENABLE_INPUT_SYSTEM
+                if (Keyboard.current != null)
+                {
+                    return Keyboard.current.spaceKey.wasPressedThisFrame ||
+                           Keyboard.current.tKey.wasPressedThisFrame;
+                }
+#endif
+            }
+            catch { }
+            return false;
         }
 
         private void UpdateRmsVolume(int currentWritePos)
@@ -244,18 +335,18 @@ namespace NeuroCompanion.Carl
             float sum = 0f;
             for (int i = 0; i < _rmsSampleBuffer.Length; i++)
             {
-                sum += _rmsSampleBuffer[i] * _rmsSampleBuffer[i];
+                float amplified = _rmsSampleBuffer[i] * micGain;
+                sum += amplified * amplified;
             }
-            float rms = Mathf.Sqrt(sum / _rmsSampleBuffer.Length);
-            _currentRmsVolume = Mathf.Lerp(_currentRmsVolume, rms, Time.deltaTime * 20f);
+            float rawRms = Mathf.Sqrt(sum / _rmsSampleBuffer.Length);
+            _currentRmsVolume = Mathf.Lerp(_currentRmsVolume, rawRms, Time.deltaTime * 20f);
         }
 
-        private void UpdateLiveVuMeter(bool isSpeaking)
+        private void UpdateLiveVuMeter(bool isSpeaking, float effectiveThreshold)
         {
             if (micStatusText == null) return;
 
-            // Sensitivity scale based on voiceThreshold
-            int bars = Mathf.Clamp(Mathf.RoundToInt((_currentRmsVolume / Mathf.Max(voiceThreshold, 0.001f)) * 3f), 0, 5);
+            int bars = Mathf.Clamp(Mathf.RoundToInt((_currentRmsVolume / Mathf.Max(effectiveThreshold, 0.001f)) * 3f), 0, 5);
             string meter = "";
             for (int b = 0; b < 5; b++)
             {
@@ -296,16 +387,24 @@ namespace NeuroCompanion.Carl
 
             float durationSeconds = (float)totalSamplesRecorded / sampleRate;
 
-            // Filter out accidental quick noise/clicks
-            if (durationSeconds < minSpeechLength)
+            // Strict ambient filter: discard if speech was too brief OR lacked actual voiced sound (e.g. ambient fan/click)
+            if (durationSeconds < minSpeechLength || _actualVoicedDuration < 0.20f)
             {
-                Debug.Log($"[CarlVoiceListener] Discarded brief noise ({durationSeconds:F2}s < {minSpeechLength}s)");
+                Debug.Log($"[CarlVoiceListener] Discarded ambient noise ({durationSeconds:F2}s, voiced: {_actualVoicedDuration:F2}s). Remaining quiet.");
                 _state = VADState.Idle;
-                SetUIStatus("🎙️ Mic Ready: Speak to Carl anytime (or press Space)", new Color(0.3f, 0.9f, 0.55f));
+                _sustainedVoiceTimer = 0f;
+                _actualVoicedDuration = 0f;
+                SetUIStatus("🎙️ Mic Ready: Speak to Carl anytime", new Color(0.3f, 0.9f, 0.55f));
                 return;
             }
 
-            Debug.Log($"[CarlVoiceListener] Spoken utterance detected: {durationSeconds:F2}s ({totalSamplesRecorded} samples at {sampleRate}Hz). Encoding WAV...");
+            Debug.Log($"[CarlVoiceListener] Spoken utterance detected: {durationSeconds:F2}s (voiced: {_actualVoicedDuration:F2}s). Encoding WAV...");
+
+            // Instant 0.28s conversational bridge: Carl speaks opening words immediately
+            if (dialogueController != null)
+            {
+                dialogueController.PlayConversationalBridge();
+            }
 
             float[] speechSamples = new float[totalSamplesRecorded];
             if (endSample >= startSample)
@@ -328,9 +427,15 @@ namespace NeuroCompanion.Carl
                 }
             }
 
-            // Convert to 16-bit PCM WAV at the native hardware sample rate
-            byte[] wavBytes = WavUtility.FromAudioSamples(speechSamples, 1, sampleRate);
+            // Clean 3x software boost for transcription clarity
+            for (int i = 0; i < speechSamples.Length; i++)
+            {
+                speechSamples[i] = Mathf.Clamp(speechSamples[i] * 3.0f, -1.0f, 1.0f);
+            }
 
+            // Downsample to 16kHz: 67% smaller payload and 2x faster STT recognition
+            float[] sttSamples = WavUtility.DownsampleTo16k(speechSamples, sampleRate);
+            byte[] wavBytes = WavUtility.FromAudioSamples(sttSamples, 1, 16000);
             StartCoroutine(SendWavAudioToSTT(wavBytes, durationSeconds));
         }
 
@@ -341,7 +446,7 @@ namespace NeuroCompanion.Carl
                 req.uploadHandler = new UploadHandlerRaw(wavBytes);
                 req.downloadHandler = new DownloadHandlerBuffer();
                 req.SetRequestHeader("Content-Type", "audio/wav");
-                req.timeout = 7;
+                req.timeout = 30; // Generous timeout for STT + Gemini LLM + TTS synthesis
 
                 yield return req.SendWebRequest();
 
@@ -356,32 +461,54 @@ namespace NeuroCompanion.Carl
                         string userTranscript = !string.IsNullOrEmpty(sttData.transcription) ? sttData.transcription : "(Voice detected)";
                         SetUIStatus($"🎙️ Heard: \"{userTranscript}\"", new Color(0.25f, 0.95f, 0.55f));
 
-                        // Deliver reply through Carl's speech bubble and animated voice
-                        if (dialogueController != null)
+                        AudioClip dynamicClip = null;
+                        if (!string.IsNullOrEmpty(sttData.audio_base64))
                         {
-                            dialogueController.DeliverCarlReply(sttData.reply, sttData.action);
+                            try
+                            {
+                                byte[] dynamicBytes = Convert.FromBase64String(sttData.audio_base64);
+                                dynamicClip = WavUtility.ToAudioClip(dynamicBytes, "DynamicCarlReply");
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogWarning("[CarlVoiceListener] Error decoding dynamic audio: " + ex.Message);
+                            }
                         }
 
-                        // Pause VAD while Carl is speaking (+ margin)
+                        if (dialogueController != null)
+                        {
+                            dialogueController.DeliverCarlReply(sttData.reply, sttData.action, dynamicClip);
+                        }
+
                         _state = VADState.CarlSpeaking;
                         _carlSpeechCooldownTimer = Mathf.Clamp(sttData.reply.Length * 0.08f, 5.0f, 10.0f);
+                        yield break;
+                    }
+                    else
+                    {
+                        // Speech was quiet or noise. Deliver gentle companion reassurance
+                        Debug.Log("[CarlVoiceListener] Speech unintelligible or low volume. Reassuring patient.");
+                        if (dialogueController != null)
+                        {
+                            dialogueController.DeliverCarlReply("Take all the time you need, my friend. I'm right here with you in the garden.", "talk", null);
+                        }
+                        _state = VADState.CarlSpeaking;
+                        _carlSpeechCooldownTimer = 4.0f;
                         yield break;
                     }
                 }
                 else
                 {
-                    Debug.LogWarning($"[CarlVoiceListener] STT endpoint failed: {req.error}. Using local companion reply.");
+                    Debug.LogWarning($"[CarlVoiceListener] STT endpoint error ({req.error}). Delivering warm companion fallback.");
+                    if (dialogueController != null)
+                    {
+                        dialogueController.DeliverCarlReply("I hear you, my friend. It's so peaceful enjoying our garden together today.", "talk", null);
+                    }
+                    _state = VADState.CarlSpeaking;
+                    _carlSpeechCooldownTimer = 4.0f;
+                    yield break;
                 }
             }
-
-            // Fallback if backend was unreachable or error occurred
-            if (dialogueController != null)
-            {
-                dialogueController.SendMessageToCarl("Hi Carl, how are you?");
-            }
-
-            _state = VADState.CarlSpeaking;
-            _carlSpeechCooldownTimer = 6.0f;
         }
 
         public void TriggerManualFallback(string phrase)

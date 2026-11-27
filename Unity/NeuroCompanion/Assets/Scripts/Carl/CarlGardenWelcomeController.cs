@@ -18,6 +18,7 @@ namespace NeuroCompanion.Carl
     {
         public enum WalkState
         {
+            WaitingForPatientMode,
             WaitingForBreeze,
             WalkingIn,
             ArrivingAndTurning,
@@ -37,11 +38,11 @@ namespace NeuroCompanion.Carl
         };
 
         [Header("Movement Dynamics")]
-        public float walkSpeed = 2.4f;
-        public float stepFrequency = 3.2f;
+        public float walkSpeed = 3.2f; // Brisk, joyful approach
+        public float stepFrequency = 4.0f;
         public float stepHopHeight = 0.035f;
         public float waddleRollAngle = 3.2f;
-        public float initialStartDelay = 1.0f; // Wait for breeze sound to begin
+        public float initialStartDelay = 0.5f;
 
         [Header("Audio & Speech")]
         public AudioSource audioSource;
@@ -58,7 +59,7 @@ namespace NeuroCompanion.Carl
         public float maxMouthOpen = 75f;
 
         [Header("Current State")]
-        public WalkState currentState = WalkState.WaitingForBreeze;
+        public WalkState currentState = WalkState.WaitingForPatientMode;
 
         // Private variables
         private int _currentWaypointIndex = 0;
@@ -88,7 +89,12 @@ namespace NeuroCompanion.Carl
             if (faceSkinnedMesh == null)
                 faceSkinnedMesh = GetComponentInChildren<SkinnedMeshRenderer>();
 
-            // Place Carl at far start position
+            // Place Carl at far start position and remain resting
+            ResetToResting();
+        }
+
+        public void StartEntranceSequence()
+        {
             if (pathWaypoints != null && pathWaypoints.Length > 0)
             {
                 transform.position = pathWaypoints[0];
@@ -105,11 +111,52 @@ namespace NeuroCompanion.Carl
             _currentWaypointIndex = 0;
             _stateTimer = 0f;
             _walkTimer = 0f;
-            currentState = WalkState.WaitingForBreeze;
+            currentState = WalkState.WalkingIn;
+            Debug.Log("[CarlGardenWelcomeController] Patient Mode active — Carl running in from pathway!");
+        }
+
+        public void ResetToResting()
+        {
+            currentState = WalkState.WaitingForPatientMode;
+            _currentWaypointIndex = 0;
+            _stateTimer = 0f;
+            _walkTimer = 0f;
+
+            if (pathWaypoints != null && pathWaypoints.Length > 0)
+            {
+                transform.position = pathWaypoints[0];
+                _basePosition = pathWaypoints[0];
+                if (pathWaypoints.Length > 1)
+                {
+                    Vector3 lookFirst = (pathWaypoints[1] - pathWaypoints[0]).normalized;
+                    lookFirst.y = 0f;
+                    if (lookFirst.sqrMagnitude > 0.001f)
+                        transform.rotation = Quaternion.LookRotation(lookFirst);
+                }
+            }
+
+            if (audioSource != null && audioSource.isPlaying)
+            {
+                audioSource.Stop();
+            }
+
+            if (faceSkinnedMesh != null)
+            {
+                faceSkinnedMesh.SetBlendShapeWeight(0, 0f);  // Close mouth
+                faceSkinnedMesh.SetBlendShapeWeight(1, 25f); // Gentle resting smile
+            }
+
+            if (headTransform != null)
+            {
+                headTransform.localRotation = Quaternion.identity;
+            }
         }
 
         private void Update()
         {
+            if (currentState == WalkState.WaitingForPatientMode)
+                return;
+
             _stateTimer += Time.deltaTime;
 
             switch (currentState)
@@ -269,6 +316,19 @@ namespace NeuroCompanion.Carl
                 audioSource.clip = welcomeClip;
                 audioSource.Play();
             }
+
+            // Show speech bubble for welcome greeting
+            var dialogueCtrl = GetComponent<CarlDialogueController>();
+            if (dialogueCtrl == null) dialogueCtrl = FindFirstObjectByType<CarlDialogueController>();
+            if (dialogueCtrl != null)
+            {
+                if (dialogueCtrl.speechBubblePanel != null) dialogueCtrl.speechBubblePanel.SetActive(true);
+                if (dialogueCtrl.speakerNameText != null) dialogueCtrl.speakerNameText.text = "👴 Carl Fredricksen";
+                if (dialogueCtrl.speechBubbleText != null)
+                {
+                    dialogueCtrl.speechBubbleText.text = "Hello there, my friend! Welcome to our peaceful garden. Take a deep breath of the fresh air with me.";
+                }
+            }
         }
 
         private void UpdateWelcoming()
@@ -316,7 +376,7 @@ namespace NeuroCompanion.Carl
                 headTransform.localRotation = Quaternion.Euler(nod, tilt, 0f);
             }
 
-            // When audio finishes, transition to gentle idle
+            // When audio finishes, transition to gentle idle and unlock conversational voice
             if (audioSource != null && !audioSource.isPlaying && _stateTimer > 2.0f)
             {
                 currentState = WalkState.IdleWaiting;
@@ -324,6 +384,22 @@ namespace NeuroCompanion.Carl
                 {
                     faceSkinnedMesh.SetBlendShapeWeight(0, 0f);  // Close mouth
                     faceSkinnedMesh.SetBlendShapeWeight(1, 35f); // Keep gentle smile
+                }
+
+                // Dismiss welcome bubble
+                var dialogueCtrl = GetComponent<CarlDialogueController>();
+                if (dialogueCtrl == null) dialogueCtrl = FindFirstObjectByType<CarlDialogueController>();
+                if (dialogueCtrl != null && dialogueCtrl.speechBubblePanel != null)
+                {
+                    dialogueCtrl.speechBubblePanel.SetActive(false);
+                }
+
+                // UNLOCK hands-free voice dialogue!
+                var voiceListener = GetComponent<CarlVoiceListener>();
+                if (voiceListener == null) voiceListener = FindFirstObjectByType<CarlVoiceListener>();
+                if (voiceListener != null)
+                {
+                    voiceListener.EnableVoiceListening();
                 }
             }
         }

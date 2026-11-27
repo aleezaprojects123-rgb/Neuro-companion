@@ -85,6 +85,19 @@ namespace NeuroCompanion.Backend
                 _windAudioClip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/soft_calm_wind.wav");
             }
 #endif
+
+            // Ensure Carl is resting far away and mic is dormant on initial load
+            var welcomeCtrl = FindFirstObjectByType<Carl.CarlGardenWelcomeController>();
+            if (welcomeCtrl != null)
+            {
+                welcomeCtrl.ResetToResting();
+            }
+
+            var voiceListener = FindFirstObjectByType<Carl.CarlVoiceListener>();
+            if (voiceListener != null)
+            {
+                voiceListener.DisableVoiceListening();
+            }
         }
 
         /// <summary>
@@ -197,6 +210,13 @@ namespace NeuroCompanion.Backend
 
             _flightCoroutine = null;
             Debug.Log("[GardenGame] Touchdown complete — patient standing in garden sanctuary.");
+
+            // Touchdown complete: Carl runs in from far away down the pathway to greet patient
+            var welcomeCtrl = FindFirstObjectByType<Carl.CarlGardenWelcomeController>();
+            if (welcomeCtrl != null)
+            {
+                welcomeCtrl.StartEntranceSequence();
+            }
         }
 
         private static Vector3 CalculateCubicBezier(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
@@ -227,6 +247,25 @@ namespace NeuroCompanion.Backend
             {
                 _windAudioSource.Stop();
                 _windAudioSource.volume = 0f;
+            }
+
+            // Reset Carl back to far resting spot and turn off voice listening
+            var welcomeCtrl = FindFirstObjectByType<Carl.CarlGardenWelcomeController>();
+            if (welcomeCtrl != null)
+            {
+                welcomeCtrl.ResetToResting();
+            }
+
+            var voiceListener = FindFirstObjectByType<Carl.CarlVoiceListener>();
+            if (voiceListener != null)
+            {
+                voiceListener.DisableVoiceListening();
+            }
+
+            var dialogueCtrl = FindFirstObjectByType<Carl.CarlDialogueController>();
+            if (dialogueCtrl != null && dialogueCtrl.speechBubblePanel != null)
+            {
+                dialogueCtrl.speechBubblePanel.SetActive(false);
             }
 
             if (_gardenGameRoot != null) _gardenGameRoot.SetActive(false);
