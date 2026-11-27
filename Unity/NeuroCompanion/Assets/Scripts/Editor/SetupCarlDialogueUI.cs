@@ -12,7 +12,7 @@ namespace NeuroCompanion.Backend.Editor
         [MenuItem("NeuroCompanion/Setup Carl Dialogue System")]
         public static void Setup()
         {
-            Debug.Log("[SetupCarlDialogueUI] Configuring Clean Voice-Only Communication for Carl...");
+            Debug.Log("[SetupCarlDialogueUI] Configuring Clean Voice-Only Communication with Matching Voice Audio...");
 
             // 1. Locate UI Canvas
             var canvasGo = GameObject.Find("[UI]");
@@ -25,7 +25,7 @@ namespace NeuroCompanion.Backend.Editor
             var hud = canvasGo.transform.Find("Patient_HUD");
             Transform parentPanel = hud != null ? hud : canvasGo.transform;
 
-            // 2. Remove bottom chat panel completely (no dialogue box blocking Carl or garden)
+            // 2. Remove bottom chat panel completely
             var prevChat = parentPanel.Find("Carl_Chat_Panel");
             if (prevChat != null) Undo.DestroyObjectImmediate(prevChat.gameObject);
 
@@ -70,7 +70,7 @@ namespace NeuroCompanion.Backend.Editor
             bubbleRt.sizeDelta = new Vector2(580f, 110f);
 
             var bubbleBg = bubbleGo.AddComponent<Image>();
-            bubbleBg.color = new Color(0.08f, 0.12f, 0.16f, 0.88f); // Translucent soothing slate
+            bubbleBg.color = new Color(0.08f, 0.12f, 0.16f, 0.88f);
 
             // Speaker Badge
             var badgeGo = new GameObject("SpeakerBadge");
@@ -105,7 +105,7 @@ namespace NeuroCompanion.Backend.Editor
             speechTmp.enableWordWrapping = true;
             speechTmp.alignment = TextAlignmentOptions.TopLeft;
 
-            bubbleGo.SetActive(false); // Hidden by default, only pops up when Carl talks
+            bubbleGo.SetActive(false); // Hidden by default, only appears when Carl speaks
 
             // ========================================================
             // 5. SUBTLE TOP-RIGHT MICROPHONE STATUS PILL
@@ -119,11 +119,11 @@ namespace NeuroCompanion.Backend.Editor
             micBadgeRt.anchorMin = new Vector2(1f, 1f);
             micBadgeRt.anchorMax = new Vector2(1f, 1f);
             micBadgeRt.pivot = new Vector2(1f, 1f);
-            micBadgeRt.anchoredPosition = new Vector2(-180f, -20f); // Top-right near Exit button
+            micBadgeRt.anchoredPosition = new Vector2(-180f, -20f);
             micBadgeRt.sizeDelta = new Vector2(280f, 34f);
 
             var micBadgeBg = micBadgeGo.AddComponent<Image>();
-            micBadgeBg.color = new Color(0.06f, 0.10f, 0.14f, 0.75f); // Subtle background
+            micBadgeBg.color = new Color(0.06f, 0.10f, 0.14f, 0.75f);
 
             var micTxtGo = new GameObject("Text");
             micTxtGo.transform.SetParent(micBadgeGo.transform, false);
@@ -138,12 +138,11 @@ namespace NeuroCompanion.Backend.Editor
             micStatusTmp.alignment = TextAlignmentOptions.Center;
 
             // ========================================================
-            // 6. CONFIGURE CarlDialogueController (VOICE ONLY)
+            // 6. CONFIGURE CarlDialogueController WITH MATCHING VOICE CLIPS
             // ========================================================
             var dialogueCtrl = carlGo.GetComponent<CarlDialogueController>();
             if (dialogueCtrl == null) dialogueCtrl = carlGo.AddComponent<CarlDialogueController>();
 
-            // Clear any text input field or button references
             dialogueCtrl.messageInputField = null;
             dialogueCtrl.sendButton = null;
             dialogueCtrl.quickPill1 = null;
@@ -158,9 +157,12 @@ namespace NeuroCompanion.Backend.Editor
             if (audioSrc == null) audioSrc = carlGo.AddComponent<AudioSource>();
             dialogueCtrl.carlAudioSource = audioSrc;
 
-            var voiceClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/carl_joyful_greeting.wav");
-            if (voiceClip == null) voiceClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/carl_speech_sample.wav");
-            dialogueCtrl.talkingVoiceClip = voiceClip;
+            // Load and assign all matching voice clips
+            dialogueCtrl.clipImFine = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/carl_im_fine.wav");
+            dialogueCtrl.clipHello = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/carl_hello.wav");
+            dialogueCtrl.clipGardening = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/carl_gardening.wav");
+            dialogueCtrl.clipGardenPeace = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/carl_garden_peace.wav");
+            dialogueCtrl.clipWelcome = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/carl_joyful_greeting.wav");
 
             dialogueCtrl.faceSkinnedMesh = carlGo.GetComponentInChildren<SkinnedMeshRenderer>();
 
@@ -185,7 +187,7 @@ namespace NeuroCompanion.Backend.Editor
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
             AssetDatabase.SaveAssets();
 
-            Debug.Log("[SetupCarlDialogueUI] Dialogue box removed. Clean hands-free voice communication enabled!");
+            Debug.Log("[SetupCarlDialogueUI] Configured matching voice audio: carl_im_fine.wav will now play when Carl responds!");
         }
     }
 }

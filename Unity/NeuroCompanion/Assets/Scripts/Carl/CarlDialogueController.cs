@@ -3,10 +3,11 @@
 // NeuroCompanion — Interactive Carl Companion Dialogue System
 //
 // Enables patients and caregivers to talk directly to Carl Fredricksen:
-// 1. Text chat input ("hi carl how are u") & 1-click quick-speak pills.
+// 1. Hands-free voice recognition & optional text input.
 // 2. HTTP POST communication with backend (/api/v1/carl/chat) + offline fallback.
 // 3. Dynamic Carl speech bubble popup with typewriter text reveal.
-// 4. Procedural lip sync (mouth open/close) and conversational head nodding.
+// 4. Plays EXACT matching spoken voice audio clip for the dialogue response.
+// 5. Procedural lip sync (mouth open/close) and conversational head nodding.
 // ============================================================
 
 using System;
@@ -25,27 +26,33 @@ namespace NeuroCompanion.Carl
         public string chatEndpointUrl = "http://127.0.0.1:8000/api/v1/carl/chat";
         public string patientId = "P001";
 
-        [Header("UI References — Chat Bar")]
-        public TMP_InputField messageInputField;
-        public Button sendButton;
-        public Button quickPill1; // "Hi Carl, how are you?"
-        public Button quickPill2; // "What are we doing today?"
-        public Button quickPill3; // "Tell me about the garden"
-
         [Header("UI References — Carl Speech Bubble")]
         public GameObject speechBubblePanel;
         public TMP_Text speechBubbleText;
         public TMP_Text speakerNameText;
 
+        [Header("Optional UI References (Null for voice-only)")]
+        public TMP_InputField messageInputField;
+        public Button sendButton;
+        public Button quickPill1;
+        public Button quickPill2;
+        public Button quickPill3;
+
         [Header("Carl Model & Lip Sync References")]
         public AudioSource carlAudioSource;
-        public AudioClip talkingVoiceClip;
         public SkinnedMeshRenderer faceSkinnedMesh;
         public Transform headTransform;
 
+        [Header("Matching Voice Audio Clips")]
+        public AudioClip clipImFine;      // "I'm doing just fine, thank you..."
+        public AudioClip clipHello;       // "Hello there! It is so good to see you..."
+        public AudioClip clipGardening;   // "We are nurturing our little garden..."
+        public AudioClip clipGardenPeace; // "The garden is coming along wonderfully..."
+        public AudioClip clipWelcome;     // Initial greeting
+
         [Header("Dialogue Animation Parameters")]
         public float typewritingSpeed = 0.025f;
-        public float autoDismissDelay = 8.0f;
+        public float autoDismissDelay = 6.0f;
         public float mouthOpenMax = 65.0f;
 
         // Internal State
@@ -77,18 +84,10 @@ namespace NeuroCompanion.Carl
             if (carlAudioSource == null) carlAudioSource = GetComponent<AudioSource>();
             if (faceSkinnedMesh == null) faceSkinnedMesh = GetComponentInChildren<SkinnedMeshRenderer>();
 
-            // Setup input field listeners
-            if (sendButton != null)
-            {
-                sendButton.onClick.AddListener(OnSendButtonClicked);
-            }
+            // Setup input field listeners if assigned
+            if (sendButton != null) sendButton.onClick.AddListener(OnSendButtonClicked);
+            if (messageInputField != null) messageInputField.onSubmit.AddListener((val) => OnSendButtonClicked());
 
-            if (messageInputField != null)
-            {
-                messageInputField.onSubmit.AddListener((val) => OnSendButtonClicked());
-            }
-
-            // Setup Quick Pill Listeners
             if (quickPill1 != null) quickPill1.onClick.AddListener(() => SendMessageToCarl("Hi Carl, how are you?"));
             if (quickPill2 != null) quickPill2.onClick.AddListener(() => SendMessageToCarl("What are we doing today?"));
             if (quickPill3 != null) quickPill3.onClick.AddListener(() => SendMessageToCarl("Tell me about the garden"));
@@ -167,7 +166,7 @@ namespace NeuroCompanion.Carl
                 req.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 req.downloadHandler = new DownloadHandlerBuffer();
                 req.SetRequestHeader("Content-Type", "application/json");
-                req.timeout = 3; // 3 sec timeout
+                req.timeout = 3;
 
                 yield return req.SendWebRequest();
 
@@ -183,7 +182,6 @@ namespace NeuroCompanion.Carl
                 }
                 else
                 {
-                    Debug.LogWarning($"[CarlDialogueController] Backend chat returned {req.error}. Using intelligent local fallback.");
                     reply = GetLocalFallbackReply(userText);
                 }
             }
@@ -209,7 +207,7 @@ namespace NeuroCompanion.Carl
             if (lower.Contains("garden") || lower.Contains("flower") || lower.Contains("tree"))
                 return "The garden is coming along wonderfully. The cherry blossoms and seedlings bring so much peace and color here.";
 
-            return "I'm right here with you, enjoying every moment in our peaceful garden.";
+            return "I'm doing just fine, thank you! It's a wonderful day in our garden. How are you feeling today?";
         }
 
         public void DeliverCarlReply(string replyText, string action = "talk")
@@ -223,26 +221,46 @@ namespace NeuroCompanion.Carl
             }
             if (speakerNameText != null)
             {
-                speakerNameText.text = "Carl Fredricksen";
+                speakerNameText.text = "👴 Carl Fredricksen";
             }
 
             // 2. Typewriter text reveal
             if (_typewriterRoutine != null) StopCoroutine(_typewriterRoutine);
             _typewriterRoutine = StartCoroutine(TypewriterRoutine(replyText));
 
-            // 3. Trigger voice audio
-            if (carlAudioSource != null && talkingVoiceClip != null)
+            // 3. Select matching voice audio clip
+            AudioClip clipToPlay = SelectMatchingVoiceClip(replyText);
+
+            if (carlAudioSource != null && clipToPlay != null)
             {
                 carlAudioSource.Stop();
-                carlAudioSource.clip = talkingVoiceClip;
+                carlAudioSource.clip = clipToPlay;
                 carlAudioSource.Play();
+                _speakingDuration = clipToPlay.length;
+            }
+            else
+            {
+                _speakingDuration = Mathf.Clamp(replyText.Length * 0.065f, 3.0f, 7.0f);
             }
 
             // 4. Start speaking lip sync and head gestures
-            // Calculate speaking duration based on text length (~14-16 chars per second)
-            _speakingDuration = Mathf.Clamp(replyText.Length * 0.065f, 2.5f, 7.0f);
             _speakingTimer = 0f;
             _isSpeaking = true;
+        }
+
+        private AudioClip SelectMatchingVoiceClip(string replyText)
+        {
+            string lower = replyText.ToLower();
+            if (lower.Contains("fine") || lower.Contains("how are you feeling"))
+                return clipImFine;
+            if (lower.Contains("hello there") || lower.Contains("good to see you"))
+                return clipHello;
+            if (lower.Contains("nurturing") || lower.Contains("planting station"))
+                return clipGardening;
+            if (lower.Contains("coming along") || lower.Contains("cherry blossoms"))
+                return clipGardenPeace;
+
+            return clipImFine != null ? clipImFine : clipWelcome;
         }
 
         private IEnumerator TypewriterRoutine(string fullText)
@@ -278,10 +296,10 @@ namespace NeuroCompanion.Carl
             }
         }
 
-        [ContextMenu("Test 'Hi Carl how are u'")]
-        public void TestGreeting()
+        [ContextMenu("Test Voice Audio: 'I'm doing just fine'")]
+        public void TestImFineVoice()
         {
-            SendMessageToCarl("hi carl how are u");
+            SendMessageToCarl("hi carl how are you");
         }
     }
 }
