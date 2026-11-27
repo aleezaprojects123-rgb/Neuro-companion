@@ -12,7 +12,7 @@ namespace NeuroCompanion.Backend.Editor
         [MenuItem("NeuroCompanion/Setup Carl Dialogue System")]
         public static void Setup()
         {
-            Debug.Log("[SetupCarlDialogueUI] Building Carl Dialogue HUD with Hands-Free Voice Recognition...");
+            Debug.Log("[SetupCarlDialogueUI] Configuring Clean Voice-Only Communication for Carl...");
 
             // 1. Locate UI Canvas
             var canvasGo = GameObject.Find("[UI]");
@@ -22,16 +22,15 @@ namespace NeuroCompanion.Backend.Editor
                 return;
             }
 
-            var canvas = canvasGo.GetComponent<Canvas>();
             var hud = canvasGo.transform.Find("Patient_HUD");
             Transform parentPanel = hud != null ? hud : canvasGo.transform;
 
-            // 2. Clean previous dialogue UI if present
+            // 2. Remove bottom chat panel completely (no dialogue box blocking Carl or garden)
             var prevChat = parentPanel.Find("Carl_Chat_Panel");
             if (prevChat != null) Undo.DestroyObjectImmediate(prevChat.gameObject);
 
-            var prevBubble = parentPanel.Find("Carl_Speech_Bubble");
-            if (prevBubble != null) Undo.DestroyObjectImmediate(prevBubble.gameObject);
+            var prevChatUnderCanvas = canvasGo.transform.Find("Carl_Chat_Panel");
+            if (prevChatUnderCanvas != null) Undo.DestroyObjectImmediate(prevChatUnderCanvas.gameObject);
 
             // 3. Locate Carl_Fredricksen
             var gardenRoot = GameObject.Find("[GARDEN_GAME]");
@@ -57,18 +56,21 @@ namespace NeuroCompanion.Backend.Editor
             }
 
             // ========================================================
-            // BUILD CARL SPEECH BUBBLE (TOP-CENTER OVER CARL)
+            // 4. CLEAN CARL SPEECH BUBBLE (ONLY APPEARS WHEN CARL SPEAKS)
             // ========================================================
+            var prevBubble = parentPanel.Find("Carl_Speech_Bubble");
+            if (prevBubble != null) Undo.DestroyObjectImmediate(prevBubble.gameObject);
+
             var bubbleGo = new GameObject("Carl_Speech_Bubble");
             bubbleGo.transform.SetParent(parentPanel, false);
             var bubbleRt = bubbleGo.AddComponent<RectTransform>();
-            bubbleRt.anchorMin = new Vector2(0.5f, 0.72f);
-            bubbleRt.anchorMax = new Vector2(0.5f, 0.72f);
+            bubbleRt.anchorMin = new Vector2(0.5f, 0.76f);
+            bubbleRt.anchorMax = new Vector2(0.5f, 0.76f);
             bubbleRt.pivot = new Vector2(0.5f, 0.5f);
-            bubbleRt.sizeDelta = new Vector2(620f, 130f);
+            bubbleRt.sizeDelta = new Vector2(580f, 110f);
 
             var bubbleBg = bubbleGo.AddComponent<Image>();
-            bubbleBg.color = new Color(0.08f, 0.12f, 0.16f, 0.90f); // Dark translucent soothing slate
+            bubbleBg.color = new Color(0.08f, 0.12f, 0.16f, 0.88f); // Translucent soothing slate
 
             // Speaker Badge
             var badgeGo = new GameObject("SpeakerBadge");
@@ -77,14 +79,14 @@ namespace NeuroCompanion.Backend.Editor
             badgeRt.anchorMin = new Vector2(0f, 1f);
             badgeRt.anchorMax = new Vector2(0f, 1f);
             badgeRt.pivot = new Vector2(0f, 1f);
-            badgeRt.anchoredPosition = new Vector2(18f, -12f);
-            badgeRt.sizeDelta = new Vector2(250f, 26f);
+            badgeRt.anchoredPosition = new Vector2(16f, -10f);
+            badgeRt.sizeDelta = new Vector2(240f, 24f);
 
             var badgeText = badgeGo.AddComponent<TextMeshProUGUI>();
             badgeText.text = "👴 Carl Fredricksen";
-            badgeText.fontSize = 17;
+            badgeText.fontSize = 16;
             badgeText.fontStyle = FontStyles.Bold;
-            badgeText.color = new Color(0.96f, 0.72f, 0.24f); // Golden amber accent
+            badgeText.color = new Color(0.96f, 0.72f, 0.24f);
 
             // Dialogue Body Text
             var speechTextGo = new GameObject("SpeechText");
@@ -93,175 +95,60 @@ namespace NeuroCompanion.Backend.Editor
             speechRt.anchorMin = new Vector2(0f, 0f);
             speechRt.anchorMax = new Vector2(1f, 1f);
             speechRt.pivot = new Vector2(0.5f, 0.5f);
-            speechRt.offsetMin = new Vector2(20f, 12f);
-            speechRt.offsetMax = new Vector2(-20f, -38f);
+            speechRt.offsetMin = new Vector2(18f, 10f);
+            speechRt.offsetMax = new Vector2(-18f, -34f);
 
             var speechTmp = speechTextGo.AddComponent<TextMeshProUGUI>();
             speechTmp.text = "I'm doing just fine, thank you! It's a wonderful day in our garden. How are you feeling today?";
-            speechTmp.fontSize = 20;
+            speechTmp.fontSize = 19;
             speechTmp.color = Color.white;
             speechTmp.enableWordWrapping = true;
             speechTmp.alignment = TextAlignmentOptions.TopLeft;
 
-            bubbleGo.SetActive(false); // Initially hidden
+            bubbleGo.SetActive(false); // Hidden by default, only pops up when Carl talks
 
             // ========================================================
-            // BUILD CARL CHAT & VOICE PANEL (BOTTOM-CENTER OF SCREEN)
+            // 5. SUBTLE TOP-RIGHT MICROPHONE STATUS PILL
             // ========================================================
-            var chatPanelGo = new GameObject("Carl_Chat_Panel");
-            chatPanelGo.transform.SetParent(parentPanel, false);
-            var chatRt = chatPanelGo.AddComponent<RectTransform>();
-            chatRt.anchorMin = new Vector2(0.5f, 0f);
-            chatRt.anchorMax = new Vector2(0.5f, 0f);
-            chatRt.pivot = new Vector2(0.5f, 0f);
-            chatRt.anchoredPosition = new Vector2(0f, 20f);
-            chatRt.sizeDelta = new Vector2(800f, 140f);
+            var prevMicBadge = parentPanel.Find("Voice_Status_Badge");
+            if (prevMicBadge != null) Undo.DestroyObjectImmediate(prevMicBadge.gameObject);
 
-            var chatBg = chatPanelGo.AddComponent<Image>();
-            chatBg.color = new Color(0.06f, 0.09f, 0.13f, 0.88f); // Deep soothing panel
+            var micBadgeGo = new GameObject("Voice_Status_Badge");
+            micBadgeGo.transform.SetParent(parentPanel, false);
+            var micBadgeRt = micBadgeGo.AddComponent<RectTransform>();
+            micBadgeRt.anchorMin = new Vector2(1f, 1f);
+            micBadgeRt.anchorMax = new Vector2(1f, 1f);
+            micBadgeRt.pivot = new Vector2(1f, 1f);
+            micBadgeRt.anchoredPosition = new Vector2(-180f, -20f); // Top-right near Exit button
+            micBadgeRt.sizeDelta = new Vector2(280f, 34f);
 
-            // 1. Hands-Free Voice Status Banner (Top of Panel)
-            var voiceStatusGo = new GameObject("VoiceStatusBanner");
-            voiceStatusGo.transform.SetParent(chatPanelGo.transform, false);
-            var voiceStatusRt = voiceStatusGo.AddComponent<RectTransform>();
-            voiceStatusRt.anchorMin = new Vector2(0f, 1f);
-            voiceStatusRt.anchorMax = new Vector2(1f, 1f);
-            voiceStatusRt.pivot = new Vector2(0.5f, 1f);
-            voiceStatusRt.anchoredPosition = new Vector2(0f, -8f);
-            voiceStatusRt.sizeDelta = new Vector2(0f, 28f);
+            var micBadgeBg = micBadgeGo.AddComponent<Image>();
+            micBadgeBg.color = new Color(0.06f, 0.10f, 0.14f, 0.75f); // Subtle background
 
-            var voiceStatusTmp = voiceStatusGo.AddComponent<TextMeshProUGUI>();
-            voiceStatusTmp.text = "🎙️ Voice Active — Speak to Carl anytime! (Say: \"Hi Carl, how are you?\")";
-            voiceStatusTmp.fontSize = 14;
-            voiceStatusTmp.fontStyle = FontStyles.Bold;
-            voiceStatusTmp.color = new Color(0.25f, 0.85f, 0.55f); // Gentle reassuring green
-            voiceStatusTmp.alignment = TextAlignmentOptions.Center;
-
-            // 2. Quick Speak Pills Row
-            var pillsRowGo = new GameObject("QuickPillsRow");
-            pillsRowGo.transform.SetParent(chatPanelGo.transform, false);
-            var pillsRt = pillsRowGo.AddComponent<RectTransform>();
-            pillsRt.anchorMin = new Vector2(0f, 1f);
-            pillsRt.anchorMax = new Vector2(1f, 1f);
-            pillsRt.pivot = new Vector2(0.5f, 1f);
-            pillsRt.anchoredPosition = new Vector2(0f, -38f);
-            pillsRt.sizeDelta = new Vector2(0f, 34f);
-
-            var pillsLayout = pillsRowGo.AddComponent<HorizontalLayoutGroup>();
-            pillsLayout.childAlignment = TextAnchor.MiddleCenter;
-            pillsLayout.spacing = 10f;
-            pillsLayout.childForceExpandWidth = true;
-            pillsLayout.childForceExpandHeight = true;
-            pillsLayout.padding = new RectOffset(16, 16, 0, 0);
-
-            var pill1 = CreatePillButton(pillsRowGo.transform, "Pill_HiCarl", "💬 Hi Carl, how are you?");
-            var pill2 = CreatePillButton(pillsRowGo.transform, "Pill_WhatDo", "🌱 What are we doing today?");
-            var pill3 = CreatePillButton(pillsRowGo.transform, "Pill_Garden", "🌸 Tell me about the garden");
-
-            // 3. Input & Send Row
-            var inputRowGo = new GameObject("InputRow");
-            inputRowGo.transform.SetParent(chatPanelGo.transform, false);
-            var inputRowRt = inputRowGo.AddComponent<RectTransform>();
-            inputRowRt.anchorMin = new Vector2(0f, 0f);
-            inputRowRt.anchorMax = new Vector2(1f, 0f);
-            inputRowRt.pivot = new Vector2(0.5f, 0f);
-            inputRowRt.anchoredPosition = new Vector2(0f, 12f);
-            inputRowRt.sizeDelta = new Vector2(-32f, 44f);
-
-            // Input Field
-            var inputGo = new GameObject("InputField");
-            inputGo.transform.SetParent(inputRowGo.transform, false);
-            var inputRt = inputGo.AddComponent<RectTransform>();
-            inputRt.anchorMin = new Vector2(0f, 0f);
-            inputRt.anchorMax = new Vector2(1f, 1f);
-            inputRt.pivot = new Vector2(0f, 0.5f);
-            inputRt.offsetMin = new Vector2(0f, 0f);
-            inputRt.offsetMax = new Vector2(-120f, 0f);
-
-            var inputImg = inputGo.AddComponent<Image>();
-            inputImg.color = new Color(0.14f, 0.18f, 0.24f, 0.95f);
-
-            var tmpInput = inputGo.AddComponent<TMP_InputField>();
-
-            // Text Area
-            var textAreaGo = new GameObject("Text Area");
-            textAreaGo.transform.SetParent(inputGo.transform, false);
-            var textAreaRt = textAreaGo.AddComponent<RectTransform>();
-            textAreaRt.anchorMin = Vector2.zero;
-            textAreaRt.anchorMax = Vector2.one;
-            textAreaRt.offsetMin = new Vector2(14f, 4f);
-            textAreaRt.offsetMax = new Vector2(-14f, -4f);
-            var mask = textAreaGo.AddComponent<RectMask2D>();
-
-            // Placeholder Text
-            var placeholderGo = new GameObject("Placeholder");
-            placeholderGo.transform.SetParent(textAreaGo.transform, false);
-            var placeholderRt = placeholderGo.AddComponent<RectTransform>();
-            placeholderRt.anchorMin = Vector2.zero;
-            placeholderRt.anchorMax = Vector2.one;
-            placeholderRt.offsetMin = Vector2.zero;
-            placeholderRt.offsetMax = Vector2.zero;
-            var placeholderText = placeholderGo.AddComponent<TextMeshProUGUI>();
-            placeholderText.text = "Speak into mic or type here (e.g. 'hi carl how are u')...";
-            placeholderText.fontSize = 15;
-            placeholderText.fontStyle = FontStyles.Italic;
-            placeholderText.color = new Color(0.6f, 0.65f, 0.72f);
-            placeholderText.alignment = TextAlignmentOptions.MidlineLeft;
-
-            // Main Input Text
-            var inputTextGo = new GameObject("Text");
-            inputTextGo.transform.SetParent(textAreaGo.transform, false);
-            var inputTextRt = inputTextGo.AddComponent<RectTransform>();
-            inputTextRt.anchorMin = Vector2.zero;
-            inputTextRt.anchorMax = Vector2.one;
-            inputTextRt.offsetMin = Vector2.zero;
-            inputTextRt.offsetMax = Vector2.zero;
-            var inputText = inputTextGo.AddComponent<TextMeshProUGUI>();
-            inputText.fontSize = 17;
-            inputText.color = Color.white;
-            inputText.alignment = TextAlignmentOptions.MidlineLeft;
-
-            tmpInput.textViewport = textAreaRt;
-            tmpInput.textComponent = inputText;
-            tmpInput.placeholder = placeholderText;
-
-            // Send Button
-            var sendBtnGo = new GameObject("Btn_Send");
-            sendBtnGo.transform.SetParent(inputRowGo.transform, false);
-            var sendRt = sendBtnGo.AddComponent<RectTransform>();
-            sendRt.anchorMin = new Vector2(1f, 0f);
-            sendRt.anchorMax = new Vector2(1f, 1f);
-            sendRt.pivot = new Vector2(1f, 0.5f);
-            sendRt.anchoredPosition = Vector2.zero;
-            sendRt.sizeDelta = new Vector2(110f, 44f);
-
-            var sendImg = sendBtnGo.AddComponent<Image>();
-            sendImg.color = new Color(0.18f, 0.52f, 0.38f); // Soft forest green
-            var sendBtn = sendBtnGo.AddComponent<Button>();
-
-            var sendTxtGo = new GameObject("Text");
-            sendTxtGo.transform.SetParent(sendBtnGo.transform, false);
-            var sendTxtRt = sendTxtGo.AddComponent<RectTransform>();
-            sendTxtRt.anchorMin = Vector2.zero;
-            sendTxtRt.anchorMax = Vector2.one;
-            var sendTmp = sendTxtGo.AddComponent<TextMeshProUGUI>();
-            sendTmp.text = "Send ➔";
-            sendTmp.fontSize = 16;
-            sendTmp.fontStyle = FontStyles.Bold;
-            sendTmp.color = Color.white;
-            sendTmp.alignment = TextAlignmentOptions.Center;
+            var micTxtGo = new GameObject("Text");
+            micTxtGo.transform.SetParent(micBadgeGo.transform, false);
+            var micTxtRt = micTxtGo.AddComponent<RectTransform>();
+            micTxtRt.anchorMin = Vector2.zero;
+            micTxtRt.anchorMax = Vector2.one;
+            var micStatusTmp = micTxtGo.AddComponent<TextMeshProUGUI>();
+            micStatusTmp.text = "🎙️ Mic Active: Say \"Hi Carl\"";
+            micStatusTmp.fontSize = 14;
+            micStatusTmp.fontStyle = FontStyles.Bold;
+            micStatusTmp.color = new Color(0.25f, 0.85f, 0.55f);
+            micStatusTmp.alignment = TextAlignmentOptions.Center;
 
             // ========================================================
-            // ATTACH & CONFIGURE CarlDialogueController ON CARL
+            // 6. CONFIGURE CarlDialogueController (VOICE ONLY)
             // ========================================================
             var dialogueCtrl = carlGo.GetComponent<CarlDialogueController>();
             if (dialogueCtrl == null) dialogueCtrl = carlGo.AddComponent<CarlDialogueController>();
 
-            dialogueCtrl.messageInputField = tmpInput;
-            dialogueCtrl.sendButton = sendBtn;
-            dialogueCtrl.quickPill1 = pill1;
-            dialogueCtrl.quickPill2 = pill2;
-            dialogueCtrl.quickPill3 = pill3;
+            // Clear any text input field or button references
+            dialogueCtrl.messageInputField = null;
+            dialogueCtrl.sendButton = null;
+            dialogueCtrl.quickPill1 = null;
+            dialogueCtrl.quickPill2 = null;
+            dialogueCtrl.quickPill3 = null;
 
             dialogueCtrl.speechBubblePanel = bubbleGo;
             dialogueCtrl.speechBubbleText = speechTmp;
@@ -281,46 +168,24 @@ namespace NeuroCompanion.Backend.Editor
             if (head != null) dialogueCtrl.headTransform = head;
 
             // ========================================================
-            // ATTACH & CONFIGURE CarlVoiceListener (MICROPHONE RECOGNIZER)
+            // 7. CONFIGURE CarlVoiceListener (MICROPHONE LISTENER)
             // ========================================================
             var voiceListener = carlGo.GetComponent<CarlVoiceListener>();
             if (voiceListener == null) voiceListener = carlGo.AddComponent<CarlVoiceListener>();
 
             voiceListener.dialogueController = dialogueCtrl;
-            voiceListener.micStatusText = voiceStatusTmp;
+            voiceListener.micStatusText = micStatusTmp;
             voiceListener.startListeningOnAwake = true;
 
             // Mark Scene Dirty and Save
             EditorUtility.SetDirty(carlGo);
-            EditorUtility.SetDirty(chatPanelGo);
             EditorUtility.SetDirty(bubbleGo);
+            EditorUtility.SetDirty(micBadgeGo);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
             AssetDatabase.SaveAssets();
 
-            Debug.Log("[SetupCarlDialogueUI] Carl Hands-Free Voice & Dialogue System configured and saved successfully!");
-        }
-
-        private static Button CreatePillButton(Transform parent, string name, string label)
-        {
-            var btnGo = new GameObject(name);
-            btnGo.transform.SetParent(parent, false);
-            var img = btnGo.AddComponent<Image>();
-            img.color = new Color(0.16f, 0.22f, 0.30f, 0.90f); // Slate pill
-            var btn = btnGo.AddComponent<Button>();
-
-            var txtGo = new GameObject("Text");
-            txtGo.transform.SetParent(btnGo.transform, false);
-            var txtRt = txtGo.AddComponent<RectTransform>();
-            txtRt.anchorMin = Vector2.zero;
-            txtRt.anchorMax = Vector2.one;
-            var tmp = txtGo.AddComponent<TextMeshProUGUI>();
-            tmp.text = label;
-            tmp.fontSize = 14;
-            tmp.color = new Color(0.90f, 0.93f, 0.96f);
-            tmp.alignment = TextAlignmentOptions.Center;
-
-            return btn;
+            Debug.Log("[SetupCarlDialogueUI] Dialogue box removed. Clean hands-free voice communication enabled!");
         }
     }
 }
